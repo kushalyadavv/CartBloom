@@ -112,7 +112,11 @@ A single TypeScript module answers: *given this cart and this config, which gift
 
 This is the keystone of the design. If the widget's logic and the function's logic ever diverge, the bar reports "unlocked" while checkout charges full price — a bug that appears only at specific cart states and is close to unreproducible from a support ticket. Making them the same code eliminates the entire class.
 
-**Consequence:** the function is written in **TypeScript** (compiled via Javy) rather than Rust. Rust produces smaller, faster Wasm but cannot share code with a browser widget. See §12 for the instruction-limit risk and its mitigation.
+**Consequence:** the function is written in **TypeScript** (compiled via Javy) rather than Rust. Rust produces smaller, faster Wasm but cannot share code with a browser widget. See §13 for the instruction-limit risk and its mitigation.
+
+**Qualifier — the core is scope-agnostic.** The two hosts do not have identical information available. The function can ask Shopify live whether a variant belongs to a collection; the widget cannot, because `/cart.js` exposes no collection membership. The core therefore accepts a **normalised cart in which each line already carries a resolved `inScope` flag per offer**, computed by each host by whatever means it has. The core guarantees that identical inputs produce identical entitlements; guaranteeing identical *inputs* is each host's responsibility.
+
+Where the widget cannot resolve scope with certainty it must resolve **conservatively — under-counting rather than over-counting**. An under-promising bar is a cosmetic defect; an over-promising one is a customer charged at checkout for something the bar said was free.
 
 ---
 
