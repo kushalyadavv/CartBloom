@@ -1,15 +1,90 @@
-query Input {
+# Input for CartBloom's entitlement evaluation.
+#
+# $tags and $collectionIds are NOT literals: they come from a JSON metafield on
+# the discount node, declared under [extensions.input.variables] in
+# shopify.extension.toml. The input query is compiled at build time and one
+# function serves every shop, so literals here would hard-code a single
+# merchant's configuration into the binary.
+#
+# Shopify caps list-type input variables at 100 elements, so a shop may target
+# at most 100 distinct customer tags and 100 distinct collections across all of
+# its offers. Publish-time validation enforces that.
+#
+# Request only what is used: total input is capped at 64,000 bytes and a
+# metafield value at 10,000, and an oversized metafield arrives as a silent null.
+query Input($tags: [String!], $collectionIds: [ID!]) {
   cart {
     lines {
       id
+      quantity
+
+      # Undiscounted unit price. Thresholds are measured on this, never on a
+      # discounted amount — see spec section 7, Trap 1 (the oscillation bug).
       cost {
-        subtotalAmount {
+        amountPerQuantity {
           amount
+        }
+      }
+
+      merchandise {
+        # Required first, unaliased: typegen needs it to deserialise the union.
+        __typename
+        ... on ProductVariant {
+          id
+          product {
+            # Needed for PRODUCTS-scoped offers.
+            id
+            # Per-collection membership, so scope resolves per offer.
+            inCollections(ids: $collectionIds) {
+              collectionId
+              isMember
+            }
+          }
+        }
+      }
+
+      # What a line CLAIMS. Never evidence that the claim is good — entitlement
+      # is re-derived from cart state. See spec section 7.
+      cartbloomOffer: attribute(key: "_cartbloom_offer") {
+        value
+      }
+      cartbloomTier: attribute(key: "_cartbloom_tier") {
+        value
+      }
+    }
+
+    buyerIdentity {
+      customer {
+        # Per-tag booleans, so each offer can test its own tags. hasAnyTag
+        # collapses to a single boolean across the whole list and cannot.
+        #
+        # Deliberately the ONLY customer field requested. Adding email, name or
+        # phone here would pull the app into Protected Customer Data Level 1.
+        # Treat this selection set as a compliance boundary.
+        hasTags(tags: $tags) {
+          tag
+          hasTag
         }
       }
     }
   }
+
   discount {
     discountClasses
+
+    # The compact offer config, written at publish time. Compact because a
+    # verbose Growth-plan config measures 16,858 bytes against a 10,000 cap,
+    # and an oversized metafield arrives as null rather than as an error.
+    config: metafield(namespace: "$app:cartbloom", key: "config") {
+      jsonValue
+    }
+  }
+
+  # ISO 3166-1 alpha-2. localization.market exists but is deprecated and
+  # slated for removal, so audience targeting keys on country.
+  localization {
+    country {
+      isoCode
+    }
   }
 }

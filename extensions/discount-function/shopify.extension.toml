@@ -17,6 +17,15 @@ description = "t:description"
   input_query = "src/cart_delivery_options_discounts_generate_run.graphql"
   export = "cart_delivery_options_discounts_generate_run"
 
+  # Runtime values for the input query's $tags and $collectionIds. The query is
+  # compiled at build time and one function serves every shop, so these cannot
+  # be literals. Shopify populates them from this JSON metafield on the discount
+  # node. Lists are capped at 100 elements, so a shop may target at most 100
+  # distinct customer tags and 100 distinct collections across all its offers.
+  [extensions.input.variables]
+  namespace = "$app:cartbloom"
+  key = "input-variables"
+
   [extensions.build]
   command = "cargo build --target=wasm32-unknown-unknown --release"
   path = "target/wasm32-unknown-unknown/release/discount-function.wasm"
