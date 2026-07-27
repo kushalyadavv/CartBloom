@@ -6,32 +6,43 @@ application_url = "https://example.com"
 embedded = true
 
 [access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,write_metaobjects,write_metaobject_definitions"
+# Narrowed from the template's write_products,write_metaobjects,
+# write_metaobject_definitions. CartBloom creates no products and no
+# metaobjects; over-broad scopes draw reviewer scrutiny and have to be
+# justified individually in the submission form.
+#
+#   write_discounts — create and update the single automatic app discount,
+#                     and write the config metafields on its discount node
+#   read_products   — populate the gift and collection pickers in the wizard
+#
+# Deliberately NOT requested: any customer or order scope. Customer tag
+# targeting is evaluated inside the function via hasTags, which returns
+# booleans, so no customer data is ever read. That keeps CartBloom entirely
+# out of Protected Customer Data — see spec §11.
+scopes = "write_discounts,read_products"
 
-[product.metafields.app.demo_info]
-type = "single_line_text_field"
-name = "Demo Source Info"
-description = "Tracks products created by the Shopify app template for development"
+# Offer config, read by the discount function. Compact-encoded: a verbose
+# Growth-plan config measures 16,858 bytes against Shopify's 10,000-byte
+# function metafield cap, and an oversized value arrives as a silent null.
+[discount.metafields.app.cartbloom-config]
+type = "json"
+name = "CartBloom offer configuration"
+description = "Compact-encoded tier and gift configuration evaluated by the discount function"
 
-  [product.metafields.app.demo_info.access]
-  admin = "merchant_read_write"
+  [discount.metafields.app.cartbloom-config.access]
+  admin = "merchant_read"
 
-[metaobjects.app.example]
-name = "Example"
-description = "An example metaobject definition created by this template"
+# Runtime values for the input query's $tags and $collectionIds. The query is
+# compiled at build time and one function serves every shop, so these cannot be
+# literals. Shopify populates the variables from this metafield. Lists are
+# capped at 100 elements.
+[discount.metafields.app.cartbloom-input-variables]
+type = "json"
+name = "CartBloom input query variables"
+description = "Customer tags and collection IDs referenced by the discount function's input query"
 
-  [metaobjects.app.example.access]
-  admin = "merchant_read_write"
-
-[metaobjects.app.example.fields.title]
-name = "Title"
-type = "single_line_text_field"
-required = true
-
-[metaobjects.app.example.fields.description]
-name = "Description"
-type = "multi_line_text_field"
+  [discount.metafields.app.cartbloom-input-variables.access]
+  admin = "merchant_read"
 
 [webhooks]
 api_version = "2026-10"
@@ -43,6 +54,13 @@ api_version = "2026-10"
   [[webhooks.subscriptions]]
   uri = "/webhooks/app/scopes_update"
   topics = [ "app/scopes_update" ]
+
+  # Mandatory compliance topics. Declared here rather than registered per shop
+  # so they cannot be missed on an install. shop/redact genuinely purges D1;
+  # the customer topics are honest no-ops because CartBloom stores no PII.
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/compliance"
+  compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
 [auth]
 redirect_urls = [ "https://example.com/api/auth" ]

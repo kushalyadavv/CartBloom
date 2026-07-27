@@ -23,8 +23,8 @@ description = "t:description"
   # node. Lists are capped at 100 elements, so a shop may target at most 100
   # distinct customer tags and 100 distinct collections across all its offers.
   [extensions.input.variables]
-  namespace = "$app:cartbloom"
-  key = "input-variables"
+  namespace = "$app"
+  key = "cartbloom-input-variables"
 
   [extensions.build]
   command = "cargo build --target=wasm32-unknown-unknown --release"

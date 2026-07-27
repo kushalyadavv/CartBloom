@@ -1,10 +1,76 @@
-query Input {
+# Input for free-shipping evaluation.
+#
+# Deliberately mirrors cart_lines_discounts_generate_run.graphql: "is this tier
+# unlocked" is the same question in both targets, so it must be asked of the
+# same data. The gift-claim attributes are requested here too — not because this
+# target grants gifts, but because gift lines must be excluded from the
+# threshold measure, and omitting them would let a cart qualify for free
+# shipping in one target and not the other.
+#
+# $tags and $collectionIds come from the JSON metafield declared under
+# [extensions.input.variables]; they cannot be literals, because the query is
+# compiled once and serves every shop.
+query Input($tags: [String!], $collectionIds: [ID!]) {
   cart {
     deliveryGroups {
       id
     }
+
+    lines {
+      id
+      quantity
+
+      cost {
+        amountPerQuantity {
+          amount
+        }
+      }
+
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          product {
+            id
+            inCollections(ids: $collectionIds) {
+              collectionId
+              isMember
+            }
+          }
+        }
+      }
+
+      cartbloomOffer: attribute(key: "_cartbloom_offer") {
+        value
+      }
+      cartbloomTier: attribute(key: "_cartbloom_tier") {
+        value
+      }
+    }
+
+    buyerIdentity {
+      customer {
+        # The only customer field requested. See the compliance note in
+        # cart_lines_discounts_generate_run.graphql.
+        hasTags(tags: $tags) {
+          tag
+          hasTag
+        }
+      }
+    }
   }
+
   discount {
     discountClasses
+
+    config: metafield(namespace: "$app", key: "cartbloom-config") {
+      jsonValue
+    }
+  }
+
+  localization {
+    country {
+      isoCode
+    }
   }
 }

@@ -75,7 +75,7 @@ query Input($tags: [String!], $collectionIds: [ID!]) {
     # The compact offer config, written at publish time. Compact because a
     # verbose Growth-plan config measures 16,858 bytes against a 10,000 cap,
     # and an oversized metafield arrives as null rather than as an error.
-    config: metafield(namespace: "$app:cartbloom", key: "config") {
+    config: metafield(namespace: "$app", key: "cartbloom-config") {
       jsonValue
     }
   }
