@@ -765,13 +765,16 @@ describe('resolveWithinTier', () => {
   it('offers the pool as a choice under PICK_ONE', () => {
     const t = tier('t1', [gift('v1'), gift('v2'), gift('v3')]);
     const result = resolveWithinTier('o1', t, 'PICK_ONE');
-    expect(result.requiresChoice).toBe(true);
-    expect(result.candidates.map((c) => c.variantId)).toEqual(['v1', 'v2', 'v3']);
+    expect(result).not.toBeNull();
+    expect(result!.requiresChoice).toBe(true);
+    expect(result!.candidates.map((c) => c.variantId)).toEqual(['v1', 'v2', 'v3']);
   });
 
   it('does not require a choice under PICK_ONE when the pool has one entry', () => {
     const t = tier('t1', [gift('v1')]);
-    expect(resolveWithinTier('o1', t, 'PICK_ONE').requiresChoice).toBe(false);
+    const result = resolveWithinTier('o1', t, 'PICK_ONE');
+    expect(result).not.toBeNull();
+    expect(result!.requiresChoice).toBe(false);
   });
 
   it('returns null for a tier with an empty pool', () => {
@@ -1357,7 +1360,7 @@ export function maxClaimableGifts(offer: Offer): number {
 npx vitest run app/entitlement/resolve.test.ts
 ```
 
-Expected: PASS — 10 tests.
+Expected: PASS — 9 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -1581,7 +1584,7 @@ export type { GiftValidation } from './validateGift';
 npm test
 ```
 
-Expected: PASS — 57 tests across 7 files.
+Expected: PASS — 56 tests across 7 files.
 
 - [ ] **Step 7: Commit**
 
@@ -1984,7 +1987,7 @@ hand-written, so coverage cannot quietly drift."
 - [x] Instruction budget measured and recorded — **FAILED the gate**; function moves to Rust, parity moves to golden vectors (Task 14)
 - [ ] Golden vectors generated, committed, and passing against the TypeScript core
 - [ ] Workers + D1 hosting verdict recorded from Task 13 Step 5
-- [ ] `npm test` passes — 76 tests across 8 files (57 entitlement + 19 purity; the purity count is `1 + 2 × source files`, so it grows as the core does)
+- [ ] `npm test` passes — 56 entitlement tests, plus the purity suite (`1 + 2 × source files`) and the generated vector suite. Counts shift as the core grows; the gate is green, not a number.
 - [ ] `npx tsc --noEmit` reports no errors
 - [ ] `npm run build` succeeds
 - [ ] The core has zero external imports (enforced by test)

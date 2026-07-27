@@ -31,13 +31,16 @@ describe('resolveWithinTier', () => {
   it('offers the pool as a choice under PICK_ONE', () => {
     const t = tier('t1', [gift('v1'), gift('v2'), gift('v3')]);
     const result = resolveWithinTier('o1', t, 'PICK_ONE');
-    expect(result.requiresChoice).toBe(true);
-    expect(result.candidates.map((c) => c.variantId)).toEqual(['v1', 'v2', 'v3']);
+    expect(result).not.toBeNull();
+    expect(result!.requiresChoice).toBe(true);
+    expect(result!.candidates.map((c) => c.variantId)).toEqual(['v1', 'v2', 'v3']);
   });
 
   it('does not require a choice under PICK_ONE when the pool has one entry', () => {
     const t = tier('t1', [gift('v1')]);
-    expect(resolveWithinTier('o1', t, 'PICK_ONE').requiresChoice).toBe(false);
+    const result = resolveWithinTier('o1', t, 'PICK_ONE');
+    expect(result).not.toBeNull();
+    expect(result!.requiresChoice).toBe(false);
   });
 
   it('returns null for a tier with an empty pool', () => {
