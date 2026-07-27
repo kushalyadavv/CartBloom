@@ -2,10 +2,17 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { resolveOffer } from '../resolve';
-import { generateVectors, type Vector } from './generate';
+import { validateGiftLines } from '../validateGifts';
+import {
+  generateVectors, generateValidationVectors, type Vector, type ValidationVector,
+} from './generate';
 
 const golden: Vector[] = JSON.parse(
   readFileSync(join(import.meta.dirname, 'golden.json'), 'utf8')
+);
+
+const validationGolden: ValidationVector[] = JSON.parse(
+  readFileSync(join(import.meta.dirname, 'validation-golden.json'), 'utf8')
 );
 
 describe('golden vectors', () => {
@@ -49,6 +56,28 @@ describe('golden vectors', () => {
     'TypeScript core satisfies %s',
     (_name, vector) => {
       expect(resolveOffer(vector.cart, vector.offer)).toEqual(vector.expected);
+    }
+  );
+});
+
+describe('validation golden vectors', () => {
+  it('has coverage', () => {
+    expect(validationGolden.length).toBeGreaterThan(0);
+  });
+
+  it('has unique names', () => {
+    expect(new Set(validationGolden.map((v) => v.name)).size).toBe(validationGolden.length);
+  });
+
+  it('is in sync with the generator — regenerate if this fails', () => {
+    expect(generateValidationVectors()).toEqual(validationGolden);
+  });
+
+  it.each(validationGolden.map((v) => [v.name, v] as const))(
+    'TypeScript validation satisfies %s',
+    (_name, vector) => {
+      const result = Object.fromEntries(validateGiftLines(vector.cart, vector.offer));
+      expect(result).toEqual(vector.expected);
     }
   );
 });

@@ -1,0 +1,1220 @@
+[
+  {
+    "name": "validation/genuine-claim",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lg",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-tote",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-candle",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        },
+        {
+          "id": "v-t2",
+          "threshold": 15000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-hoodie",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lg": {
+        "valid": true,
+        "entry": {
+          "variantId": "v-mug",
+          "discountType": "FREE",
+          "value": 0,
+          "maxQty": 1
+        },
+        "discountQuantity": 1
+      }
+    }
+  },
+  {
+    "name": "validation/forged-variant-not-in-any-pool",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lg",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "not-in-any-pool",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-tote",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-candle",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        },
+        {
+          "id": "v-t2",
+          "threshold": 15000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-hoodie",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lg": {
+        "valid": false,
+        "discountQuantity": 0
+      }
+    }
+  },
+  {
+    "name": "validation/claim-on-locked-tier",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 11000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lg",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-hoodie",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t2"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-tote",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-candle",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        },
+        {
+          "id": "v-t2",
+          "threshold": 15000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-hoodie",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lg": {
+        "valid": false,
+        "discountQuantity": 0
+      }
+    }
+  },
+  {
+    "name": "validation/claim-on-unknown-tier",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lg",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "does-not-exist"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-tote",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-candle",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        },
+        {
+          "id": "v-t2",
+          "threshold": 15000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-hoodie",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lg": {
+        "valid": false,
+        "discountQuantity": 0
+      }
+    }
+  },
+  {
+    "name": "validation/single-highest-non-granting-tier",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lg",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "SINGLE",
+        "singleResolution": "HIGHEST"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-tote",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-candle",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        },
+        {
+          "id": "v-t2",
+          "threshold": 15000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-hoodie",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lg": {
+        "valid": false,
+        "discountQuantity": 0
+      }
+    }
+  },
+  {
+    "name": "validation/claim-on-different-offer",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lg",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o2",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-tote",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-candle",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        },
+        {
+          "id": "v-t2",
+          "threshold": 15000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-hoodie",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lg": {
+        "valid": false,
+        "discountQuantity": 0
+      }
+    }
+  },
+  {
+    "name": "validation/quantity-above-maxQty",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lg",
+          "quantity": 5,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-tote",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-candle",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        },
+        {
+          "id": "v-t2",
+          "threshold": 15000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-hoodie",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lg": {
+        "valid": true,
+        "entry": {
+          "variantId": "v-mug",
+          "discountType": "FREE",
+          "value": 0,
+          "maxQty": 1
+        },
+        "discountQuantity": 1
+      }
+    }
+  },
+  {
+    "name": "validation/quantity-below-maxQty",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lg",
+          "quantity": 2,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 3
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lg": {
+        "valid": true,
+        "entry": {
+          "variantId": "v-mug",
+          "discountType": "FREE",
+          "value": 0,
+          "maxQty": 3
+        },
+        "discountQuantity": 2
+      }
+    }
+  },
+  {
+    "name": "validation/maxQty-greater-than-one-exact-match",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lg",
+          "quantity": 3,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 3
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lg": {
+        "valid": true,
+        "entry": {
+          "variantId": "v-mug",
+          "discountType": "FREE",
+          "value": 0,
+          "maxQty": 3
+        },
+        "discountQuantity": 3
+      }
+    }
+  },
+  {
+    "name": "validation/maxQty-budget-shared-across-lines",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "la",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        },
+        {
+          "id": "lb",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        },
+        {
+          "id": "lc",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "ALL_IN_POOL",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "la": {
+        "valid": true,
+        "entry": {
+          "variantId": "v-mug",
+          "discountType": "FREE",
+          "value": 0,
+          "maxQty": 1
+        },
+        "discountQuantity": 1
+      },
+      "lb": {
+        "valid": false,
+        "discountQuantity": 0
+      },
+      "lc": {
+        "valid": false,
+        "discountQuantity": 0
+      }
+    }
+  },
+  {
+    "name": "validation/pick-one-arbitration-highest-value-wins",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lm",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        },
+        {
+          "id": "lt",
+          "quantity": 1,
+          "unitPrice": 3000,
+          "variantId": "v-tote",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        },
+        {
+          "id": "lc",
+          "quantity": 1,
+          "unitPrice": 1000,
+          "variantId": "v-candle",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-tote",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-candle",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        },
+        {
+          "id": "v-t2",
+          "threshold": 15000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-hoodie",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lm": {
+        "valid": true,
+        "entry": {
+          "variantId": "v-mug",
+          "discountType": "FREE",
+          "value": 0,
+          "maxQty": 1
+        },
+        "discountQuantity": 1
+      },
+      "lt": {
+        "valid": false,
+        "discountQuantity": 0
+      },
+      "lc": {
+        "valid": false,
+        "discountQuantity": 0
+      }
+    }
+  },
+  {
+    "name": "validation/value-tie-resolved-by-line-id",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lz",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        },
+        {
+          "id": "la",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-tote",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-tote",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-candle",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        },
+        {
+          "id": "v-t2",
+          "threshold": 15000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-hoodie",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lz": {
+        "valid": false,
+        "discountQuantity": 0
+      },
+      "la": {
+        "valid": true,
+        "entry": {
+          "variantId": "v-tote",
+          "discountType": "FREE",
+          "value": 0,
+          "maxQty": 1
+        },
+        "discountQuantity": 1
+      }
+    }
+  },
+  {
+    "name": "validation/all-in-pool-grants-every-distinct-entry",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lm",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        },
+        {
+          "id": "lt",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-tote",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        },
+        {
+          "id": "lc",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-candle",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "ALL_IN_POOL",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-tote",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-candle",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        },
+        {
+          "id": "v-t2",
+          "threshold": 15000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-hoodie",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lm": {
+        "valid": true,
+        "entry": {
+          "variantId": "v-mug",
+          "discountType": "FREE",
+          "value": 0,
+          "maxQty": 1
+        },
+        "discountQuantity": 1
+      },
+      "lt": {
+        "valid": true,
+        "entry": {
+          "variantId": "v-tote",
+          "discountType": "FREE",
+          "value": 0,
+          "maxQty": 1
+        },
+        "discountQuantity": 1
+      },
+      "lc": {
+        "valid": true,
+        "entry": {
+          "variantId": "v-candle",
+          "discountType": "FREE",
+          "value": 0,
+          "maxQty": 1
+        },
+        "discountQuantity": 1
+      }
+    }
+  },
+  {
+    "name": "validation/plain-line-absent-from-map",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lp",
+          "quantity": 1,
+          "unitPrice": 4000,
+          "variantId": "v-mug",
+          "inScope": [
+            "o1"
+          ]
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-mug",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-tote",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "v-candle",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        },
+        {
+          "id": "v-t2",
+          "threshold": 15000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "v-hoodie",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {}
+  }
+]
