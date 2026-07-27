@@ -2,8 +2,8 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { resolveOffer } from '../resolve';
 import type {
-  AcrossTierPolicy, Cart, ClaimPolicy, Offer, OfferEntitlements,
-  SingleTierResolution, TriggerMetric, WithinTierPolicy,
+  AcrossTierPolicy, Cart, CartLine, ClaimPolicy, GiftPoolEntry, Offer,
+  OfferEntitlements, SingleTierResolution, Tier, TriggerMetric, WithinTierPolicy,
 } from '../types';
 
 export interface Vector {
@@ -13,8 +13,10 @@ export interface Vector {
   expected: OfferEntitlements;
 }
 
+type AcrossSpec = { acrossTiers: AcrossTierPolicy; singleResolution?: SingleTierResolution };
+
 const WITHIN: WithinTierPolicy[] = ['ALL_IN_POOL', 'PICK_ONE'];
-const ACROSS: Array<{ acrossTiers: AcrossTierPolicy; singleResolution?: SingleTierResolution }> = [
+const ACROSS: AcrossSpec[] = [
   { acrossTiers: 'STACK' },
   { acrossTiers: 'SINGLE', singleResolution: 'HIGHEST' },
   { acrossTiers: 'SINGLE', singleResolution: 'PINNED' },
@@ -23,10 +25,27 @@ const ACROSS: Array<{ acrossTiers: AcrossTierPolicy; singleResolution?: SingleTi
 const TIER_COUNTS = [1, 2, 3, 4, 5, 6];
 const TRIGGERS: TriggerMetric[] = ['SUBTOTAL', 'QUANTITY'];
 
+/** Shared gift-pool-entry builder. Defaults to FREE, as most pool entries are. */
+function gift(variantId: string, over: Partial<GiftPoolEntry> = {}): GiftPoolEntry {
+  return { variantId, discountType: 'FREE', value: 0, maxQty: 1, ...over };
+}
+
+/** A single non-gift line contributing `unitPrice` to whatever offers are in `inScope`. */
+function line(id: string, unitPrice: number, inScope: string[], over: Partial<CartLine> = {}): CartLine {
+  return { id, quantity: 1, unitPrice, variantId: `${id}-variant`, inScope, ...over };
+}
+
+// ---------------------------------------------------------------------------
+// Family 1 — the original policy matrix. Enumerates claim-policy combinations
+// while holding tier *shape* mostly fixed (FREE_SHIPPING first tier, GIFT
+// tiers after). This is necessary coverage but not sufficient — see the
+// families below, which vary the data the policy matrix held fixed.
+// ---------------------------------------------------------------------------
+
 function buildOffer(
   tierCount: number,
   within: WithinTierPolicy,
-  across: { acrossTiers: AcrossTierPolicy; singleResolution?: SingleTierResolution },
+  across: AcrossSpec,
   trigger: TriggerMetric
 ): Offer {
   const tiers = Array.from({ length: tierCount }, (_, i) => ({
@@ -83,7 +102,7 @@ function buildCart(measure: number, trigger: TriggerMetric, withGift: boolean): 
   return { lines };
 }
 
-export function generateVectors(): Vector[] {
+function generatePolicyMatrixVectors(): Vector[] {
   const vectors: Vector[] = [];
   for (const trigger of TRIGGERS) {
     for (const within of WITHIN) {
@@ -95,7 +114,7 @@ export function generateVectors(): Vector[] {
               const cart = buildCart(measure, trigger, withGift);
               const suffix = across.singleResolution ?? across.acrossTiers;
               vectors.push({
-                name: `${trigger}/${within}/${suffix}/tiers=${tierCount}/measure=${measure}/gift=${withGift}`,
+                name: `policy/${trigger}/${within}/${suffix}/tiers=${tierCount}/measure=${measure}/gift=${withGift}`,
                 cart,
                 offer,
                 expected: resolveOffer(cart, offer),
@@ -109,11 +128,399 @@ export function generateVectors(): Vector[] {
   return vectors;
 }
 
+// ---------------------------------------------------------------------------
+// Family 2 — reward-shape axis. The policy matrix above only ever put GIFT
+// tiers after a single FREE_SHIPPING tier, so orderPercent/orderFixed were 0
+// in every one of its vectors. This crosses three tier *shapes* — all-gift,
+// mixed reward kinds, and an order-discount ladder with two ORDER_PERCENT
+// tiers and two ORDER_FIXED tiers at different values — against STACK and
+// all three SINGLE resolutions, pinning both the "highest single value per
+// type, never accumulate" rule and its independence from the claim policy
+// (order/shipping rewards come from ALL unlocked tiers, not the tiers the
+// claim policy chose to grant gifts from).
+// ---------------------------------------------------------------------------
+
+type RewardShapeName = 'all-gift' | 'mixed' | 'order-ladder';
+
+function rewardShapeTiers(shape: RewardShapeName): Tier[] {
+  switch (shape) {
+    case 'all-gift':
+      return [
+        { id: 'rs-g1', threshold: 5000, reward: 'GIFT', giftPool: [gift('rs-g1-v0'), gift('rs-g1-v1')] },
+        { id: 'rs-g2', threshold: 10000, reward: 'GIFT', giftPool: [gift('rs-g2-v0')] },
+        { id: 'rs-g3', threshold: 15000, reward: 'GIFT', giftPool: [gift('rs-g3-v0'), gift('rs-g3-v1'), gift('rs-g3-v2')] },
+      ];
+    case 'mixed':
+      return [
+        { id: 'rs-m1', threshold: 5000, reward: 'FREE_SHIPPING', giftPool: [] },
+        { id: 'rs-m2', threshold: 10000, reward: 'GIFT', giftPool: [gift('rs-m2-v0'), gift('rs-m2-v1')] },
+        { id: 'rs-m3', threshold: 15000, reward: 'ORDER_PERCENT', value: 15, giftPool: [] },
+        { id: 'rs-m4', threshold: 20000, reward: 'ORDER_FIXED', value: 1000, giftPool: [] },
+      ];
+    case 'order-ladder':
+      // Two ORDER_PERCENT tiers at different values, two ORDER_FIXED tiers at
+      // different values. No GIFT tiers at all — this shape exists purely to
+      // pin non-accumulation, independent of any gift claiming.
+      return [
+        { id: 'rs-o1', threshold: 5000, reward: 'ORDER_PERCENT', value: 10, giftPool: [] },
+        { id: 'rs-o2', threshold: 10000, reward: 'ORDER_PERCENT', value: 25, giftPool: [] },
+        { id: 'rs-o3', threshold: 15000, reward: 'ORDER_FIXED', value: 500, giftPool: [] },
+        { id: 'rs-o4', threshold: 20000, reward: 'ORDER_FIXED', value: 2000, giftPool: [] },
+      ];
+  }
+}
+
+/** The tier a PINNED policy targets for this shape — irrelevant when the shape has no GIFT tier. */
+function pinnedTargetFor(shape: RewardShapeName): string {
+  switch (shape) {
+    case 'all-gift': return 'rs-g2';
+    case 'mixed': return 'rs-m2';
+    case 'order-ladder': return 'rs-o1';
+  }
+}
+
+function rewardShapeOffer(shape: RewardShapeName, across: AcrossSpec): Offer {
+  const tiers = rewardShapeTiers(shape);
+  const claimPolicy: ClaimPolicy = {
+    withinTier: 'PICK_ONE',
+    acrossTiers: across.acrossTiers,
+    ...(across.singleResolution ? { singleResolution: across.singleResolution } : {}),
+    ...(across.singleResolution === 'PINNED' ? { pinnedTierId: pinnedTargetFor(shape) } : {}),
+  };
+  return { id: 'o1', trigger: 'SUBTOTAL', claimPolicy, tiers };
+}
+
+function generateRewardShapeVectors(): Vector[] {
+  const vectors: Vector[] = [];
+  const shapes: RewardShapeName[] = ['all-gift', 'mixed', 'order-ladder'];
+  for (const shape of shapes) {
+    for (const across of ACROSS) {
+      const offer = rewardShapeOffer(shape, across);
+      const suffix = across.singleResolution ?? across.acrossTiers;
+      for (const measure of measurePoints(offer)) {
+        const cart = buildCart(measure, 'SUBTOTAL', false);
+        vectors.push({
+          name: `rewardShape/${shape}/${suffix}/measure=${measure}`,
+          cart,
+          offer,
+          expected: resolveOffer(cart, offer),
+        });
+      }
+    }
+  }
+  return vectors;
+}
+
+// ---------------------------------------------------------------------------
+// Family 3 — inScope variation. Every vector in the policy matrix scoped its
+// one line to `['o1']`. This varies scope directly: in scope, out of scope
+// (empty array), scoped to a different offer id, and mixes of these, plus a
+// line scoped to more than one offer at once.
+// ---------------------------------------------------------------------------
+
+function generateInScopeVectors(): Vector[] {
+  const offer: Offer = {
+    id: 'o1',
+    trigger: 'SUBTOTAL',
+    claimPolicy: { withinTier: 'PICK_ONE', acrossTiers: 'STACK' },
+    tiers: [{ id: 'is-t1', threshold: 5000, reward: 'GIFT', giftPool: [gift('is-t1-v0')] }],
+  };
+
+  const scenarios: Array<{ suffix: string; lines: CartLine[] }> = [
+    { suffix: 'in-scope-only', lines: [line('l1', 6000, ['o1'])] },
+    { suffix: 'out-of-scope-only', lines: [line('l1', 6000, [])] },
+    { suffix: 'scoped-to-other-offer-only', lines: [line('l1', 6000, ['o2'])] },
+    { suffix: 'mixed-in-and-unscoped', lines: [line('l1', 3000, ['o1']), line('l2', 9000, [])] },
+    { suffix: 'mixed-in-and-other-offer', lines: [line('l1', 3000, ['o1']), line('l2', 9000, ['o2'])] },
+    { suffix: 'line-scoped-to-multiple-offers', lines: [line('l1', 6000, ['o1', 'o2'])] },
+  ];
+
+  return scenarios.map(({ suffix, lines }) => {
+    const cart: Cart = { lines };
+    return {
+      name: `inScope/${suffix}`,
+      cart,
+      offer,
+      expected: resolveOffer(cart, offer),
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Family 4 — pinnedTierId variation. Task 16 made every miss fail closed
+// (grant nothing); these four vectors pin each distinct miss shape so a
+// regression toward the old "fall back to HIGHEST" behaviour is caught, and
+// so a fix that only closes one of the two miss cases (unknown id vs. absent
+// id) is caught too.
+// ---------------------------------------------------------------------------
+
+function generatePinnedVectors(): Vector[] {
+  const tiers: Tier[] = [
+    { id: 'pin-t1', threshold: 5000, reward: 'GIFT', giftPool: [gift('pin-t1-v0')] },
+    { id: 'pin-t2', threshold: 10000, reward: 'GIFT', giftPool: [gift('pin-t2-v0')] },
+  ];
+
+  const offerWith = (pinnedTierId: string | undefined): Offer => ({
+    id: 'o1',
+    trigger: 'SUBTOTAL',
+    claimPolicy: {
+      withinTier: 'PICK_ONE',
+      acrossTiers: 'SINGLE',
+      singleResolution: 'PINNED',
+      ...(pinnedTierId !== undefined ? { pinnedTierId } : {}),
+    },
+    tiers,
+  });
+
+  const scenarios: Array<{ suffix: string; pinnedTierId: string | undefined; measure: number }> = [
+    { suffix: 'valid-and-unlocked', pinnedTierId: 'pin-t2', measure: 12000 },
+    { suffix: 'valid-but-locked-while-lower-tier-unlocked', pinnedTierId: 'pin-t2', measure: 6000 },
+    { suffix: 'unknown-id', pinnedTierId: 'does-not-exist', measure: 12000 },
+    { suffix: 'absent', pinnedTierId: undefined, measure: 12000 },
+  ];
+
+  return scenarios.map(({ suffix, pinnedTierId, measure }) => {
+    const offer = offerWith(pinnedTierId);
+    const cart = buildCart(measure, 'SUBTOTAL', false);
+    return {
+      name: `pinned/${suffix}`,
+      cart,
+      offer,
+      expected: resolveOffer(cart, offer),
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Family 5 — multi-offer carts. Pins the cross-offer gift-exclusion rule in
+// subtotal.ts: a line tagged as *any* offer's gift — this offer's own, or a
+// different offer's — never contributes to a qualifying measure.
+// ---------------------------------------------------------------------------
+
+function generateMultiOfferVectors(): Vector[] {
+  const offerO1: Offer = {
+    id: 'o1',
+    trigger: 'SUBTOTAL',
+    claimPolicy: { withinTier: 'PICK_ONE', acrossTiers: 'STACK' },
+    tiers: [{ id: 'mo-t1', threshold: 5000, reward: 'GIFT', giftPool: [gift('mo-t1-v0')] }],
+  };
+
+  const scenarios: Array<{ suffix: string; lines: CartLine[] }> = [
+    {
+      suffix: 'other-offers-gift-excluded',
+      lines: [
+        line('l1', 6000, ['o1']),
+        { id: 'lg', quantity: 1, unitPrice: 4000, variantId: 'mo-t1-v0', inScope: ['o1'], giftOfferId: 'o2', giftTierId: 'other-offer-tier' },
+      ],
+    },
+    {
+      suffix: 'own-offers-gift-excluded',
+      lines: [
+        line('l1', 6000, ['o1']),
+        { id: 'lg', quantity: 1, unitPrice: 4000, variantId: 'mo-t1-v0', inScope: ['o1'], giftOfferId: 'o1', giftTierId: 'mo-t1' },
+      ],
+    },
+    {
+      suffix: 'two-offers-gifts-both-excluded',
+      lines: [
+        line('l1', 6000, ['o1']),
+        { id: 'lg1', quantity: 1, unitPrice: 2000, variantId: 'x', inScope: ['o1'], giftOfferId: 'o1', giftTierId: 'mo-t1' },
+        { id: 'lg2', quantity: 1, unitPrice: 3000, variantId: 'y', inScope: ['o1'], giftOfferId: 'o2', giftTierId: 'z' },
+      ],
+    },
+  ];
+
+  return scenarios.map(({ suffix, lines }) => {
+    const cart: Cart = { lines };
+    return {
+      name: `multiOffer/${suffix}`,
+      cart,
+      offer: offerO1,
+      expected: resolveOffer(cart, offerO1),
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Family 6 — tier ordering and ties. `unlockedTiers` sorts ascending by
+// threshold regardless of config order, and JS's stable sort happens to
+// preserve config order among ties — but Rust's `sort_unstable` is free to
+// differ. These vectors pin config order as the tie-break (not sort
+// stability, not tier id, not the config array's raw filter order for the
+// unsorted case), for both STACK and SINGLE:HIGHEST.
+// ---------------------------------------------------------------------------
+
+function tierOrderOffer(tiers: Tier[], across: AcrossSpec): Offer {
+  const claimPolicy: ClaimPolicy = {
+    withinTier: 'PICK_ONE',
+    acrossTiers: across.acrossTiers,
+    ...(across.singleResolution ? { singleResolution: across.singleResolution } : {}),
+  };
+  return { id: 'o1', trigger: 'SUBTOTAL', claimPolicy, tiers };
+}
+
+function generateTierOrderVectors(): Vector[] {
+  const vectors: Vector[] = [];
+  const acrossForOrder: AcrossSpec[] = [
+    { acrossTiers: 'STACK' },
+    { acrossTiers: 'SINGLE', singleResolution: 'HIGHEST' },
+  ];
+
+  // Config order does not match threshold order. unlockedTierIds must still
+  // come out sorted ascending by threshold, and SINGLE:HIGHEST must pick the
+  // tier with the highest *threshold*, not the last entry in the config array
+  // (whose last entry, ord-t2 at 10000, is not the highest).
+  const unsortedTiers: Tier[] = [
+    { id: 'ord-t3', threshold: 15000, reward: 'GIFT', giftPool: [gift('ord-t3-v0')] },
+    { id: 'ord-t1', threshold: 5000, reward: 'GIFT', giftPool: [gift('ord-t1-v0')] },
+    { id: 'ord-t2', threshold: 10000, reward: 'GIFT', giftPool: [gift('ord-t2-v0')] },
+  ];
+  for (const across of acrossForOrder) {
+    const offer = tierOrderOffer(unsortedTiers, across);
+    const suffix = across.singleResolution ?? across.acrossTiers;
+    for (const measure of [4999, 5000, 12000, 20000]) {
+      const cart = buildCart(measure, 'SUBTOTAL', false);
+      vectors.push({
+        name: `tierOrder/unsorted-config/${suffix}/measure=${measure}`,
+        cart,
+        offer,
+        expected: resolveOffer(cart, offer),
+      });
+    }
+  }
+
+  // Two tiers share a threshold. Config order is 'tie-a' then 'tie-b'.
+  const tiedAB: Tier[] = [
+    { id: 'tie-a', threshold: 10000, reward: 'GIFT', giftPool: [gift('tie-a-v0')] },
+    { id: 'tie-b', threshold: 10000, reward: 'GIFT', giftPool: [gift('tie-b-v0')] },
+  ];
+  // Same tie, reversed config order — proves the tie-break follows config
+  // order rather than tier id (which would put tie-a first either way).
+  const tiedBA: Tier[] = [
+    { id: 'tie-b', threshold: 10000, reward: 'GIFT', giftPool: [gift('tie-b-v0')] },
+    { id: 'tie-a', threshold: 10000, reward: 'GIFT', giftPool: [gift('tie-a-v0')] },
+  ];
+  // A three-way tie.
+  const tripleTied: Tier[] = [
+    { id: 'tie3-x', threshold: 8000, reward: 'GIFT', giftPool: [gift('tie3-x-v0')] },
+    { id: 'tie3-y', threshold: 8000, reward: 'GIFT', giftPool: [gift('tie3-y-v0')] },
+    { id: 'tie3-z', threshold: 8000, reward: 'GIFT', giftPool: [gift('tie3-z-v0')] },
+  ];
+
+  const tieCases: Array<{ label: string; tiers: Tier[]; measure: number }> = [
+    { label: 'tied-threshold-a-before-b', tiers: tiedAB, measure: 10000 },
+    { label: 'tied-threshold-b-before-a', tiers: tiedBA, measure: 10000 },
+    { label: 'triple-tie', tiers: tripleTied, measure: 8000 },
+  ];
+  for (const { label, tiers, measure } of tieCases) {
+    for (const across of acrossForOrder) {
+      const offer = tierOrderOffer(tiers, across);
+      const suffix = across.singleResolution ?? across.acrossTiers;
+      const cart = buildCart(measure, 'SUBTOTAL', false);
+      vectors.push({
+        name: `tierOrder/${label}/${suffix}`,
+        cart,
+        offer,
+        expected: resolveOffer(cart, offer),
+      });
+    }
+  }
+
+  return vectors;
+}
+
+// ---------------------------------------------------------------------------
+// Family 7 — remaining shapes: a GIFT tier with an empty pool (unlocked but
+// grants nothing), a zero-threshold tier (unlocked even for an empty cart),
+// and gift pool entries using PERCENT and FIXED discount types rather than
+// only FREE.
+// ---------------------------------------------------------------------------
+
+function generateRemainingShapeVectors(): Vector[] {
+  const vectors: Vector[] = [];
+
+  const emptyPoolOffer: Offer = {
+    id: 'o1',
+    trigger: 'SUBTOTAL',
+    claimPolicy: { withinTier: 'PICK_ONE', acrossTiers: 'STACK' },
+    tiers: [{ id: 'empty-t1', threshold: 5000, reward: 'GIFT', giftPool: [] }],
+  };
+  for (const measure of [4999, 5000, 9000]) {
+    const cart = buildCart(measure, 'SUBTOTAL', false);
+    vectors.push({
+      name: `shapes/empty-gift-pool/measure=${measure}`,
+      cart,
+      offer: emptyPoolOffer,
+      expected: resolveOffer(cart, emptyPoolOffer),
+    });
+  }
+
+  const zeroThresholdOffer: Offer = {
+    id: 'o1',
+    trigger: 'SUBTOTAL',
+    claimPolicy: { withinTier: 'ALL_IN_POOL', acrossTiers: 'STACK' },
+    tiers: [
+      { id: 'zero-t0', threshold: 0, reward: 'GIFT', giftPool: [gift('zero-t0-v0')] },
+      { id: 'zero-t1', threshold: 5000, reward: 'GIFT', giftPool: [gift('zero-t1-v0')] },
+    ],
+  };
+  for (const measure of [0, 4999, 5000]) {
+    const cart = buildCart(measure, 'SUBTOTAL', false);
+    vectors.push({
+      name: `shapes/zero-threshold/measure=${measure}`,
+      cart,
+      offer: zeroThresholdOffer,
+      expected: resolveOffer(cart, zeroThresholdOffer),
+    });
+  }
+
+  const discountTypeOffer: Offer = {
+    id: 'o1',
+    trigger: 'SUBTOTAL',
+    claimPolicy: { withinTier: 'ALL_IN_POOL', acrossTiers: 'STACK' },
+    tiers: [
+      {
+        id: 'dt-t1',
+        threshold: 5000,
+        reward: 'GIFT',
+        giftPool: [
+          gift('dt-free', { discountType: 'FREE', value: 0 }),
+          gift('dt-percent', { discountType: 'PERCENT', value: 50 }),
+          gift('dt-fixed', { discountType: 'FIXED', value: 1500 }),
+        ],
+      },
+    ],
+  };
+  {
+    const cart = buildCart(6000, 'SUBTOTAL', false);
+    vectors.push({
+      name: 'shapes/gift-discount-types',
+      cart,
+      offer: discountTypeOffer,
+      expected: resolveOffer(cart, discountTypeOffer),
+    });
+  }
+
+  return vectors;
+}
+
+export function generateVectors(): Vector[] {
+  return [
+    ...generatePolicyMatrixVectors(),
+    ...generateRewardShapeVectors(),
+    ...generateInScopeVectors(),
+    ...generatePinnedVectors(),
+    ...generateMultiOfferVectors(),
+    ...generateTierOrderVectors(),
+    ...generateRemainingShapeVectors(),
+  ];
+}
+
 if (process.argv[1]?.endsWith('generate.ts')) {
   const vectors = generateVectors();
   writeFileSync(
     join(import.meta.dirname, 'golden.json'),
     JSON.stringify(vectors, null, 2) + '\n'
   );
-  console.log(`Wrote ${vectors.length} vectors`);
+  console.log(`Wrote ${vectors.length} entitlement vectors`);
 }

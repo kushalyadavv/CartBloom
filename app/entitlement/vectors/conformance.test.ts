@@ -26,6 +26,21 @@ describe('golden vectors', () => {
     }
   });
 
+  // Confirmed by the 2026-07-27 mutation review: the generator enumerated
+  // the policy matrix while holding the data matrix fixed, so orderPercent
+  // was 0 and inScope was ['o1'] in every one of the 1,968 vectors. These
+  // checks guard against that regressing silently.
+  it('exercises non-zero order-discount rewards, taking the highest single value', () => {
+    expect(golden.some((v) => v.expected.rewards.orderPercent > 0)).toBe(true);
+    expect(golden.some((v) => v.expected.rewards.orderFixed > 0)).toBe(true);
+  });
+
+  it('varies inScope beyond a single universal offer id', () => {
+    const scopes = new Set(golden.flatMap((v) => v.cart.lines.flatMap((l) => l.inScope)));
+    expect(scopes.size).toBeGreaterThan(1);
+    expect(golden.some((v) => v.cart.lines.some((l) => l.inScope.length === 0))).toBe(true);
+  });
+
   it('is in sync with the generator — regenerate if this fails', () => {
     expect(generateVectors()).toEqual(golden);
   });
