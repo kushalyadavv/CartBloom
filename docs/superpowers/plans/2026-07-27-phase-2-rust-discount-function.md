@@ -70,6 +70,7 @@ Read the generated `shopify.extension.toml`, `Cargo.toml`, `src/`, and any `.gra
 - The `shopify_function` crate version
 - The `[[extensions.targeting]]` entries, their `target` values, `input_query` paths, and `export` names
 - The generated project layout
+- **Whether `localization` (market / country) exists on the input schema.** This is the last unresolved assumption in spec section 13. The generated `schema.graphql` is the authoritative answer; published docs are suggestive but contradictory, and the input schema pages 404. If absent, market targeting drops from the Pro plan and section 3 needs amending.
 
 Everything downstream uses these recorded values, not the ones in this document.
 
