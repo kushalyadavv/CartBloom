@@ -4,9 +4,9 @@ import { join } from 'node:path';
 
 const DIR = join(process.cwd(), 'app/entitlement');
 
-const sourceFiles = readdirSync(DIR).filter(
-  (f) => f.endsWith('.ts') && !f.endsWith('.test.ts')
-);
+const sourceFiles = readdirSync(DIR, { withFileTypes: true })
+  .filter((e) => e.isFile() && e.name.endsWith('.ts') && !e.name.endsWith('.test.ts'))
+  .map((e) => e.name);
 
 describe('entitlement core purity', () => {
   it('has source files to check', () => {
