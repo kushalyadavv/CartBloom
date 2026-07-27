@@ -52,12 +52,20 @@ describe('resolveAcrossTiers', () => {
     expect(result).toEqual([]);
   });
 
-  it('falls back to HIGHEST when PINNED names an unknown tier id', () => {
+  it('falls back to HIGHEST when PINNED has no pinnedTierId set at all', () => {
     const result = resolveAcrossTiers(
       unlocked,
       policy({ acrossTiers: 'SINGLE', singleResolution: 'PINNED', pinnedTierId: undefined })
     );
     expect(result.map((t) => t.id)).toEqual(['t3']);
+  });
+
+  it('grants nothing when PINNED names a tier id that exists nowhere in the offer', () => {
+    const result = resolveAcrossTiers(
+      unlocked,
+      policy({ acrossTiers: 'SINGLE', singleResolution: 'PINNED', pinnedTierId: 'no-such-tier' })
+    );
+    expect(result).toEqual([]);
   });
 
   it('returns every unlocked gift tier under SINGLE/CUSTOMER_CHOICE', () => {

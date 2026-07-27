@@ -2,8 +2,11 @@
  * Shared entitlement types.
  *
  * This module and everything else in app/entitlement/ must remain free of
- * imports — no Shopify SDK, no DOM, no Node built-ins. It compiles unchanged
- * into both the Javy-built Wasm discount function and the browser widget.
+ * imports — no Shopify SDK, no DOM, no Node built-ins. The core ships to the
+ * storefront widget and generates the golden vectors; a JavaScript core was
+ * measured against Shopify's instruction budget and rejected, so the discount
+ * function is a separate Rust implementation held to the same vectors. Keeping
+ * this code dependency-free is what makes it portable and cheap to translate.
  *
  * All money is integer minor units (cents). Percentages are integers 0-100.
  */

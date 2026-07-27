@@ -4,8 +4,10 @@ import type { ClaimPolicy, Tier } from './types';
  * Axis B. Reduces the unlocked tiers to those that may grant gifts.
  *
  * CUSTOMER_CHOICE returns every unlocked gift tier — the customer needs to see
- * all options. The "only one may be claimed" constraint is applied in
- * resolve.ts, not here.
+ * all options. The "only one may be claimed" constraint cannot be applied
+ * here, because it depends on what the cart lines actually claim; it is
+ * enforced by validateGiftLines, the cart-level entry point. Nothing between
+ * here and there restricts the count.
  */
 export function resolveAcrossTiers(
   unlocked: Tier[],

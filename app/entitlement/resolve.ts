@@ -10,8 +10,16 @@ import type { Cart, GiftEntitlement, Offer, OfferEntitlements } from './types';
  * everything the customer is entitled to.
  *
  * Pure and deterministic: identical inputs always produce identical output.
- * Both the discount function and the storefront widget call this, which is
- * what keeps the bar and checkout in agreement.
+ *
+ * This is the storefront widget's implementation, and the source the golden
+ * vectors are generated from. The discount function is a separate Rust
+ * implementation that must satisfy the same vectors; the vectors, not shared
+ * code, are what keep the bar and checkout in agreement.
+ *
+ * It answers what the customer is *entitled to*, not what they may keep: under
+ * PICK_ONE and SINGLE:CUSTOMER_CHOICE the gifts array deliberately lists every
+ * option so a chooser can render them. validateGiftLines is what decides which
+ * claims are actually honoured.
  */
 export function resolveOffer(cart: Cart, offer: Offer): OfferEntitlements {
   const measure = qualifyingMeasure(cart, offer);
@@ -35,13 +43,4 @@ export function resolveOffer(cart: Cart, offer: Offer): OfferEntitlements {
     gifts,
     rewards: resolveNonGiftRewards(unlocked),
   };
-}
-
-/**
- * Under SINGLE, at most one gift may ultimately be claimed across all tiers.
- * resolveOffer exposes every option so a chooser can render them; this answers
- * how many the customer may actually keep.
- */
-export function maxClaimableGifts(offer: Offer): number {
-  return offer.claimPolicy.acrossTiers === 'SINGLE' ? 1 : Infinity;
 }
