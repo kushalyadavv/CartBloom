@@ -1,0 +1,42 @@
+{% comment %}
+  CartBloom app embed.
+
+  An *embed* block (target: body), not an app block. Cart-drawer sections do not
+  accept @app blocks, so the widget cannot be placed by the merchant there — it
+  loads globally and mounts itself into the drawer. The cart *page* gets a real
+  app block separately, where drag-and-drop placement does work.
+
+  This file exists to do exactly one thing beyond loading assets: inline the
+  offer config from the shop metafield. That is what keeps the storefront off
+  our infrastructure entirely — no app proxy, no fetch, no latency, and no
+  hosting cost that scales with a merchant's traffic (spec §4).
+
+  If the metafield is missing or storefront access was never granted on its
+  definition, `cfg` is nil and nothing renders. That is deliberate: a widget
+  that renders a progress bar it cannot compute would show a wrong number.
+{% endcomment %}
+
+{% assign cfg = shop.metafields.app.cartbloom-widget-config.value %}
+
+{% if cfg %}
+  <script>
+    window.__CARTBLOOM__ = {{ cfg | json }};
+    window.__CARTBLOOM__.moneyFormat = {{ shop.money_format | json }};
+    window.__CARTBLOOM__.routes = {
+      cartAdd: {{ routes.cart_add_url | json }},
+      cartChange: {{ routes.cart_change_url | json }},
+      cart: {{ routes.cart_url | json }}
+    };
+  </script>
+
+  {{ 'cartbloom.css' | asset_url | stylesheet_tag }}
+  <script src="{{ 'cartbloom.js' | asset_url }}" defer></script>
+{% endif %}
+
+{% schema %}
+{
+  "name": "CartBloom progress bar",
+  "target": "body",
+  "settings": []
+}
+{% endschema %}

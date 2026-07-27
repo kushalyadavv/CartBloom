@@ -67,8 +67,38 @@ console.log('\n=== input-variables metafield ($app / cartbloom-input-variables) 
 console.log('(no tags or collections in this test offer, so both lists are empty)\n');
 console.log(JSON.stringify(JSON.stringify({ tags: [], collectionIds: [] })));
 
-console.log('\n=== size ===');
-console.log(`${JSON.stringify(compact).length} bytes — ${check.ok ? 'OK' : 'OVER BUDGET'}`);
+// The widget reads a different payload from a different metafield: verbose
+// rather than compact, on the shop rather than the discount node, and carrying
+// design and placement the function never looks at.
+const widgetConfig = {
+  v: 1,
+  offers: offers.map((o) => ({
+    ...o,
+    design: {
+      layout: 'MILESTONE',
+      preset: 'candy',
+      tokens: {},
+    },
+    placement: { drawer: true, cartPage: true },
+    copy: {
+      progress: 'Just {{remaining}} away from a free gift!',
+      unlocked: 'Unlocked — pick your gift',
+      locked: 'Spend {{remaining}} more',
+    },
+  })),
+};
+
+console.log('\n=== widget metafield (shop: $app / cartbloom-widget-config) ===');
+console.log('Set with metafieldsSet, ownerId = your shop GID.\n');
+console.log(JSON.stringify(JSON.stringify(widgetConfig)));
+
+console.log('\n=== sizes ===');
+console.log(
+  `function config: ${JSON.stringify(compact).length} bytes — ${check.ok ? 'OK' : 'OVER BUDGET (cap 10,000)'}`
+);
+console.log(
+  `widget config:   ${JSON.stringify(widgetConfig).length} bytes — cap 131,072`
+);
 
 console.log('\n=== what to expect at checkout ===');
 console.log('  under $50   : nothing');

@@ -44,6 +44,27 @@ description = "Customer tags and collection IDs referenced by the discount funct
   [discount.metafields.app.cartbloom-input-variables.access]
   admin = "merchant_read"
 
+# The widget's copy of the offers, read by Liquid in the app embed block and
+# inlined into the page. This is why the storefront makes zero requests to our
+# infrastructure — the single property that keeps free hosting viable at any
+# traffic level (spec §4).
+#
+# Deliberately NOT the compact form the function reads. This payload lives under
+# the 128 KB json cap rather than the function's 10,000-byte limit, and it
+# carries design tokens, copy, and placement the function has no use for.
+# Readability here aids support; the byte budget is not scarce.
+#
+# storefront access is mandatory — without it Liquid cannot read the value and
+# the widget silently renders nothing.
+[shop.metafields.app.cartbloom-widget-config]
+type = "json"
+name = "CartBloom widget configuration"
+description = "Offers, design tokens, and placement read by the storefront widget"
+
+  [shop.metafields.app.cartbloom-widget-config.access]
+  admin = "merchant_read"
+  storefront = "public_read"
+
 [webhooks]
 api_version = "2026-10"
 
