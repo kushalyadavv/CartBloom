@@ -2002,3 +2002,82 @@ hand-written, so coverage cannot quietly drift."
 - **Collection scope resolution.** The core is deliberately scope-agnostic (spec §4). Phase 2 must decide how the function resolves `inScope` — live `inCollections` lookups versus product-ID sets embedded at publish time — and Phase 3 must make the widget's resolution **conservative**, under-counting rather than over-counting when uncertain.
 - **JSON metafield size limit**, still unverified. Measure against a config with 5 offers × 6 tiers × 5 gifts before the publish pipeline depends on it.
 - **Market/country availability** on the discount function input, still unverified. If absent, market targeting drops from the Pro plan.
+
+---
+
+# Phase 1.5 — Harden the contract before Rust starts
+
+Added 2026-07-27 after review. Phase 2 **must not begin** until these are done: the Rust function will be built against `golden.json`, and a mutation pass found **9 of 13 deliberately-wrong implementations passing all 1,968 vectors**. Two live correctness defects were also confirmed by execution.
+
+## Task 15: Cart-level validation with arbitration
+
+Fixes the two confirmed defects. `validateGiftLine` is a per-line predicate with no cross-line state, so `PICK_ONE` degrades to `ALL_IN_POOL` and `SINGLE` degrades to `STACK` — a crafted cart claims every gift in every unlocked tier. Separately, `maxQty` caps per line, so the same variant split across three lines yields three free units.
+
+Reproduced:
+
+```
+PICK_ONE, pool of 3, shopper added all three:
+  mug valid=true qty=1 / tote valid=true qty=1 / candle valid=true qty=1
+  => free units granted: 3  (spec says 1)
+maxQty=1, same variant split across 3 lines:
+  => free units granted: 3  (spec says 1)
+```
+
+**Files:** create `app/entitlement/validateGifts.ts` + test; modify `validateGift.ts`, `acrossTiers.ts`, `resolve.ts`, `index.ts`.
+
+- [ ] **Step 1:** Write failing tests for `validateGiftLines(cart, offer): Map<string, GiftValidation>` covering: `PICK_ONE` with 3 claimed lines grants exactly 1; `SINGLE:CUSTOMER_CHOICE` with claims in 2 tiers grants exactly 1; `maxQty: 1` across 3 lines grants 1 unit total; `maxQty: 2` across 3 lines of quantity 1 grants 2; `ALL_IN_POOL` + `STACK` grants every distinct pool entry; a forged variant grants nothing; ties on equal value resolve to the lower line id.
+- [ ] **Step 2:** Run and confirm failure.
+- [ ] **Step 3:** Implement per spec §6 *Arbitration*: resolve once, compute each claim's value (`FREE` → `unitPrice`; `PERCENT` → `floor(unitPrice × value / 100)`; `FIXED` → `min(value, unitPrice)`), sort by value descending then line id ascending byte-lexicographic, and allocate against budgets — one per entitlement under `PICK_ONE`, one per offer under `SINGLE`, and `maxQty` per `(tierId, variantId)` summed across lines.
+- [ ] **Step 4:** Run and confirm pass.
+- [ ] **Step 5:** Make `validateGiftLine` private or delete it; no caller should keep the unsafe per-line path. Delete `maxClaimableGifts` — it is uncalled, untested, reads like an enforcement point that does not exist, and returns `Infinity`, which has no Rust equivalent and JSON-serialises to `null`.
+- [ ] **Step 6:** Fix the false comment in `acrossTiers.ts` claiming the single-claim constraint is applied in `resolve.ts`. Fix the stale comments in `types.ts` and `resolve.ts` describing the abandoned "compiles into both Wasm and browser" architecture. Rename the `acrossTiers.test.ts` case "falls back to HIGHEST when PINNED names an unknown tier id" — it passes `undefined`, a *missing* id; add a genuine unknown-id test.
+- [ ] **Step 7:** Commit.
+
+## Task 16: Resolve the PINNED inconsistency
+
+`acrossTiers.ts` grants the highest tier when `pinnedTierId` is **missing**, but grants nothing when it names an **unknown** tier. Two malformed configs, opposite outcomes, neither vectored.
+
+- [ ] **Step 1:** Write failing tests asserting both cases grant nothing (fail closed).
+- [ ] **Step 2:** Run and confirm failure.
+- [ ] **Step 3:** Implement — remove the `HIGHEST` fallback for `PINNED`.
+- [ ] **Step 4:** Run, confirm pass, commit.
+
+## Task 17: Widen the generator's data axes
+
+The generator enumerates policy while holding data fixed. Confirmed: only `FREE_SHIPPING` and `GIFT` tier kinds exist, `orderPercent` is 0 across all 1,968 vectors, and `inScope` is `["o1"]` universally.
+
+- [ ] **Step 1:** Add a reward-shape axis — all-gift, mixed, and a ladder with two `ORDER_PERCENT` tiers at different values plus two `ORDER_FIXED` tiers — crossed with `STACK` and all three `SINGLE` resolutions, pinning the highest-single-value rule and its independence from the claim policy.
+- [ ] **Step 2:** Vary `inScope`: in scope, out of scope, and scoped to a different offer id.
+- [ ] **Step 3:** Vary `pinnedTierId`: valid-unlocked, valid-locked-while-a-lower-tier-is-unlocked, unknown, absent.
+- [ ] **Step 4:** Add multi-offer carts, pinning the cross-offer gift-exclusion rule in `subtotal.ts`.
+- [ ] **Step 5:** Add an unsorted tier array and a tied-threshold ladder; specify config order as the tie-break rather than relying on sort stability.
+- [ ] **Step 6:** Add a `GIFT` tier with an empty pool, a zero-threshold tier, and `PERCENT`/`FIXED` gift discount types.
+- [ ] **Step 7:** Regenerate, run, commit.
+
+## Task 18: Validation vector family
+
+`validateGiftLines` currently has zero vectors — the function deciding whether a merchant loses inventory is entirely unconstrained by the parity contract.
+
+- [ ] **Step 1:** Add `ValidationVector = { name, cart, offer, expected: Record<lineId, GiftValidation> }` and generate: genuine claim; forged variant; claim on a locked tier; claim on an unknown tier; claim under `SINGLE:HIGHEST` naming a non-granting tier; `quantity > maxQty`; `quantity < maxQty`; `maxQty > 1`; and the multi-line arbitration cases from Task 15.
+- [ ] **Step 2:** Extend the conformance test; regenerate; commit.
+
+## Task 19: Commit the mutation harness as a permanent gate
+
+- [ ] **Step 1:** Add `app/entitlement/vectors/mutants.test.ts` implementing at least the 13 mutations from the 2026-07-27 review: ignore `inScope`; exclude only this offer's gift lines; accumulate order discounts; suppress order discounts under `SINGLE`; order discounts always 0; free shipping only from the highest granting tier; `PINNED` miss falls back to `HIGHEST`; `PINNED` missing id grants nothing; `CUSTOMER_CHOICE` returns only the highest tier; `requiresChoice` ignores pool size; no tier sort; gift lines count toward the threshold; empty-pool `GIFT` tier still yields an entitlement.
+- [ ] **Step 2:** Each mutant must fail at least one vector. **The test asserts every mutant is caught** — a surviving mutant fails the build.
+- [ ] **Step 3:** Run. Any survivor means Task 17 or 18 has a gap; close it rather than weakening the assertion.
+- [ ] **Step 4:** Commit.
+
+## Definition of done for Phase 1.5
+
+- [ ] Both confirmed defects fixed, with tests reproducing the original failures
+- [ ] `npm test` and `npm run typecheck` green
+- [ ] All 13 mutants caught by `golden.json`
+- [ ] No stale or false comments describing the abandoned shared-compilation architecture
+- [ ] **Only then** does Phase 2 begin
+
+### Note on reading the test count
+
+Most of the suite is conformance vectors generated by calling `resolveOffer` and asserting `resolveOffer` returns it — a tautology that cannot fail. Those vectors are valuable as a **regression snapshot and Rust contract**, not as validation. The genuine behavioural assertions number in the dozens. Do not read a large total as evidence of correctness; that is precisely the reading that let 9 wrong implementations pass.
+
+Also: `golden.json` is 5.6 MB pretty-printed and regenerated wholesale, so every generator change produces an unreviewable diff. Consider JSON Lines or minified output plus a committed hash before it grows further.

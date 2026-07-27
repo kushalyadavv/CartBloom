@@ -213,6 +213,32 @@ An entitlement is a *right to a gift*, not a gift. Under `PICK_ONE`, a tier the 
 
 `PICK_ONE` selects one **product** from the pool, granted at that pool entry's `maxQty` units. A pool entry with `maxQty: 2` under `PICK_ONE` yields two units of the single chosen product, not one unit each of two products.
 
+### Arbitration — when claims exceed entitlements
+
+An entitlement is a *right* to a gift. Nothing prevents a cart from containing more claimed gift lines than the policy permits: a crafted `/cart/add.js` call can claim every product in every pool, and an honest shopper can end up with duplicate claims when the merchant republishes between two adds (the `_cartbloom_v` attribute differs, so Shopify does not merge the lines).
+
+**The rule: the highest-value claim wins.** Every other conflicting claim bills at full price.
+
+This costs the merchant nothing relative to honest play — a shopper choosing deliberately would have picked the most valuable option anyway — so exploiting the gap gains nothing, while the innocent duplicate case still receives the gift that was legitimately earned.
+
+**"Value" means the discount amount the shopper would receive**, in minor units, computed per pool entry:
+
+| `discountType` | Value |
+|---|---|
+| `FREE` | `unitPrice` |
+| `PERCENT` | `floor(unitPrice × value / 100)` |
+| `FIXED` | `min(value, unitPrice)` |
+
+**Ties break on cart line id, ascending, byte-lexicographic.** This is not decoration: Rust's `HashMap` iteration order and `sort_unstable` are not TypeScript's, so an unspecified tie-break is a licence for the two implementations to disagree. The order is part of the contract.
+
+**Budgets are allocated at cart level, not per line:**
+
+- Under `PICK_ONE`, one claim per tier entitlement.
+- Under `acrossTiers: SINGLE`, one claim across the whole offer.
+- `maxQty` is a budget per `(tierId, variantId)` **summed across every line claiming it** — not a per-line cap. Three lines of quantity 1 against `maxQty: 1` yield one discounted unit, not three.
+
+**Consequence for the API:** validation cannot be a per-line predicate. It requires a cart-level entry point that resolves once and allocates against remaining budget in the specified order. See §12 for the corresponding vector family.
+
 ### The expensive combination
 
 `PICK_ONE` + `SINGLE:CUSTOMER_CHOICE` is the hardest case: the chooser spans every unlocked tier's pool at once, and changing selection requires removing one line and adding another atomically. It is also the most distinctive feature in the product. Budget for it explicitly.
@@ -395,6 +421,9 @@ Weighted toward where mistakes cost merchants money.
 | Layer | Approach |
 |---|---|
 | **Entitlement core** | Pure functions, exhaustively unit-tested across the full policy matrix: both axes × every across-tier mode × 1–6 tiers × gift-present/absent × at, above, and below each threshold. TDD applies here specifically. |
+| **Mutation testing of the vectors** | **A permanent gate, not a one-off.** Deliberately-wrong implementations are run against `golden.json`; every one must be caught. This is the only thing that measures whether the vectors *constrain* anything — a large vector count proves nothing on its own. A first pass on 2026-07-27 found **9 of 13 wrong implementations passed all 1,968 vectors**, because the generator enumerated the policy matrix while holding the data matrix fixed. |
+| **Vector data axes** | Vectors must vary the data, not only the policy: tier reward kind (including `ORDER_PERCENT` and `ORDER_FIXED` ladders), `inScope` membership, `pinnedTierId` validity, offer count, tier ordering and tied thresholds, empty gift pools, gift discount types, and gift-line shape (forged variant, locked tier, quantity above and below `maxQty`, multiple lines per entitlement). |
+| **Validation vectors** | `validateGiftLines` needs its own vector family — `{ cart, offer } → Map<lineId, GiftValidation>`. It is the function that decides whether a merchant loses inventory, and it was initially left entirely uncovered. |
 | **Qualifying subtotal** | Dedicated tests for the oscillation trap — gift lines must never contribute to threshold calculations. |
 | **Discount function** | Golden-file tests on input/output JSON via Shopify's function testing harness. |
 | **Widget mounting** | Against saved HTML fixtures from Dawn, Horizon, and several popular paid themes, covering both standard-events and legacy paths. |
