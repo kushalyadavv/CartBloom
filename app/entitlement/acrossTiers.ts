@@ -24,11 +24,14 @@ export function resolveAcrossTiers(
 
   if (resolution === 'CUSTOMER_CHOICE') return giftTiers;
 
-  if (resolution === 'PINNED' && policy.pinnedTierId !== undefined) {
+  // PINNED fails closed. A pin that is absent, unknown, or naming a locked tier
+  // all grant nothing — a malformed config must never quietly hand out the
+  // most valuable tier, and two malformed configs must not disagree.
+  if (resolution === 'PINNED') {
     const pinned = giftTiers.find((t) => t.id === policy.pinnedTierId);
     return pinned ? [pinned] : [];
   }
 
-  // HIGHEST, and the fallback when PINNED names no tier.
+  // HIGHEST.
   return [giftTiers[giftTiers.length - 1]];
 }

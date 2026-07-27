@@ -52,12 +52,12 @@ describe('resolveAcrossTiers', () => {
     expect(result).toEqual([]);
   });
 
-  it('falls back to HIGHEST when PINNED has no pinnedTierId set at all', () => {
+  it('grants nothing when PINNED has no pinnedTierId set at all', () => {
     const result = resolveAcrossTiers(
       unlocked,
       policy({ acrossTiers: 'SINGLE', singleResolution: 'PINNED', pinnedTierId: undefined })
     );
-    expect(result.map((t) => t.id)).toEqual(['t3']);
+    expect(result).toEqual([]);
   });
 
   it('grants nothing when PINNED names a tier id that exists nowhere in the offer', () => {
