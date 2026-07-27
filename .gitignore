@@ -37,3 +37,6 @@ target/
 .superpowers/
 
 *.log
+
+# Generated widget bundle (built by npm run build:widget)
+extensions/cartbloom-widget/assets/cartbloom.js

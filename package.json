@@ -19,7 +19,9 @@
     "vite": "vite",
     "typecheck": "react-router typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:widget": "esbuild extensions/cartbloom-widget/src/index.ts --bundle --minify --format=iife --target=es2020 --outfile=extensions/cartbloom-widget/assets/cartbloom.js",
+    "check:widget-size": "npm run build:widget && node scripts/check-widget-size.mjs"
   },
   "type": "module",
   "engines": {
@@ -50,6 +52,7 @@
     "@types/react-dom": "^18.3.7",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
+    "esbuild": "^0.28.1",
     "eslint": "^8.57.1",
     "eslint-import-resolver-typescript": "^3.10.1",
     "eslint-plugin-import": "^2.32.0",
