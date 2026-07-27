@@ -5,4 +5,5 @@
 //! suite in `tests/conformance.rs` without a Wasm host. Task 23 wires
 //! `cart_lines_discounts_generate_run` to this core.
 
+pub mod config;
 pub mod entitlement;
