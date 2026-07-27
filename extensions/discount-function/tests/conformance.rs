@@ -25,7 +25,7 @@ use serde::Deserialize;
 /// Case counts are asserted so a truncated or partially-parsed vector file
 /// cannot pass by exercising nothing.
 const EXPECTED_ENTITLEMENT_VECTORS: usize = 2146;
-const EXPECTED_VALIDATION_VECTORS: usize = 14;
+const EXPECTED_VALIDATION_VECTORS: usize = 16;
 
 #[derive(Debug, Deserialize)]
 struct EntitlementVector {

@@ -1216,5 +1216,192 @@
       ]
     },
     "expected": {}
+  },
+  {
+    "name": "validation/percent-floor-vs-round-tie-break",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lz",
+          "quantity": 1,
+          "unitPrice": 105,
+          "variantId": "round-percent",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        },
+        {
+          "id": "la",
+          "quantity": 1,
+          "unitPrice": 1000,
+          "variantId": "round-fixed",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "round-percent",
+              "discountType": "PERCENT",
+              "value": 10,
+              "maxQty": 1
+            },
+            {
+              "variantId": "round-fixed",
+              "discountType": "FIXED",
+              "value": 10,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lz": {
+        "valid": false,
+        "discountQuantity": 0
+      },
+      "la": {
+        "valid": true,
+        "entry": {
+          "variantId": "round-fixed",
+          "discountType": "FIXED",
+          "value": 10,
+          "maxQty": 1
+        },
+        "discountQuantity": 1
+      }
+    }
+  },
+  {
+    "name": "validation/nonpositive-quantity-does-not-consume-budget",
+    "cart": {
+      "lines": [
+        {
+          "id": "l1",
+          "quantity": 1,
+          "unitPrice": 16000,
+          "variantId": "spend",
+          "inScope": [
+            "o1"
+          ]
+        },
+        {
+          "id": "lreal",
+          "quantity": 1,
+          "unitPrice": 3000,
+          "variantId": "zq-real",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        },
+        {
+          "id": "lzero",
+          "quantity": 0,
+          "unitPrice": 9000,
+          "variantId": "zq-zero",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        },
+        {
+          "id": "lneg",
+          "quantity": -2,
+          "unitPrice": 12000,
+          "variantId": "zq-neg",
+          "inScope": [
+            "o1"
+          ],
+          "giftOfferId": "o1",
+          "giftTierId": "v-t1"
+        }
+      ]
+    },
+    "offer": {
+      "id": "o1",
+      "trigger": "SUBTOTAL",
+      "claimPolicy": {
+        "withinTier": "PICK_ONE",
+        "acrossTiers": "STACK"
+      },
+      "tiers": [
+        {
+          "id": "v-t1",
+          "threshold": 10000,
+          "reward": "GIFT",
+          "giftPool": [
+            {
+              "variantId": "zq-real",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "zq-zero",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            },
+            {
+              "variantId": "zq-neg",
+              "discountType": "FREE",
+              "value": 0,
+              "maxQty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "lreal": {
+        "valid": true,
+        "entry": {
+          "variantId": "zq-real",
+          "discountType": "FREE",
+          "value": 0,
+          "maxQty": 1
+        },
+        "discountQuantity": 1
+      },
+      "lzero": {
+        "valid": false,
+        "discountQuantity": 0
+      },
+      "lneg": {
+        "valid": false,
+        "discountQuantity": 0
+      }
+    }
   }
 ]

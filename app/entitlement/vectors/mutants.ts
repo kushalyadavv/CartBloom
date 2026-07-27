@@ -23,7 +23,7 @@
  *
  * `validateGiftLines` (../validateGifts.ts) has no stage seams — matchClaim,
  * claimValue and the id tie-break are private to that module, and production
- * code must not be touched to export them. Mutants 14 and 15 therefore
+ * code must not be touched to export them. Mutants 14 through 17 therefore
  * duplicate that module's arbitration loop verbatim except for the one line
  * each mutation changes. Keep those copies in sync with validateGifts.ts by
  * inspection if that file's arbitration loop ever changes shape.
@@ -569,6 +569,186 @@ export function mutant15_lowestValueClaimWins(
   claims.sort((a, b) => {
     // BUG: inverted comparison — lowest value now sorts first.
     if (a.value !== b.value) return a.value < b.value ? -1 : 1;
+    return compareIdsByUtf8(a.lineId, b.lineId);
+  });
+
+  const oneClaimPerOffer = offer.claimPolicy.acrossTiers === 'SINGLE';
+  const oneClaimPerTier = offer.claimPolicy.withinTier === 'PICK_ONE';
+
+  let offerClaimTaken = false;
+  const tiersAlreadyClaimed = new Set<string>();
+  const unitsLeft = new Map<string, Map<string, number>>();
+
+  for (const claim of claims) {
+    if (oneClaimPerOffer && offerClaimTaken) continue;
+    if (oneClaimPerTier && tiersAlreadyClaimed.has(claim.tierId)) continue;
+
+    let byVariant = unitsLeft.get(claim.tierId);
+    if (byVariant === undefined) {
+      byVariant = new Map<string, number>();
+      unitsLeft.set(claim.tierId, byVariant);
+    }
+    let remaining = byVariant.get(claim.entry.variantId);
+    if (remaining === undefined) remaining = claim.entry.maxQty;
+
+    if (remaining <= 0) continue;
+
+    const discountQuantity = Math.min(claim.quantity, remaining);
+    byVariant.set(claim.entry.variantId, remaining - discountQuantity);
+    if (oneClaimPerOffer) offerClaimTaken = true;
+    if (oneClaimPerTier) tiersAlreadyClaimed.add(claim.tierId);
+
+    result.set(claim.lineId, {
+      valid: true,
+      entry: claim.entry,
+      discountQuantity,
+    });
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Mutant 16 — PERCENT claim value rounds instead of flooring (spec §6).
+// claimValue only determines sort order, so this is only observable when the
+// rounding difference flips which of two competing claims wins.
+// ---------------------------------------------------------------------------
+
+/** Verbatim copy of claimValue except the PERCENT branch rounds instead of floors. */
+function claimValue_percentRounds(entry: GiftPoolEntry, unitPrice: number): number {
+  switch (entry.discountType) {
+    case 'FREE':
+      return unitPrice;
+    case 'PERCENT':
+      // BUG: rounds to nearest instead of flooring, per spec §6.
+      return Math.floor((unitPrice * entry.value + 50) / 100);
+    case 'FIXED':
+      return Math.min(entry.value, unitPrice);
+  }
+}
+
+/** collectClaims, but scoring PERCENT claims with claimValue_percentRounds. */
+function collectClaims_percentRounds(
+  cart: Cart,
+  offer: Offer,
+  gifts: GiftEntitlement[]
+): Claim[] {
+  const claims: Claim[] = [];
+  for (const line of cart.lines) {
+    if (line.giftOfferId === undefined) continue;
+    const matched = matchClaim(gifts, offer, line);
+    if (matched === null) continue;
+    if (line.quantity <= 0) continue;
+    claims.push({
+      lineId: line.id,
+      quantity: line.quantity,
+      tierId: matched.tierId,
+      entry: matched.entry,
+      value: claimValue_percentRounds(matched.entry, line.unitPrice),
+    });
+  }
+  return claims;
+}
+
+export function mutant16_percentRoundsInsteadOfFloors(
+  cart: Cart,
+  offer: Offer
+): Map<string, GiftValidation> {
+  const result = new Map<string, GiftValidation>();
+  const entitlements = resolveOffer(cart, offer);
+
+  for (const line of cart.lines) {
+    if (line.giftOfferId !== undefined) result.set(line.id, REJECTED);
+  }
+
+  const claims = collectClaims_percentRounds(cart, offer, entitlements.gifts);
+
+  claims.sort((a, b) => {
+    if (a.value !== b.value) return a.value > b.value ? -1 : 1;
+    return compareIdsByUtf8(a.lineId, b.lineId);
+  });
+
+  const oneClaimPerOffer = offer.claimPolicy.acrossTiers === 'SINGLE';
+  const oneClaimPerTier = offer.claimPolicy.withinTier === 'PICK_ONE';
+
+  let offerClaimTaken = false;
+  const tiersAlreadyClaimed = new Set<string>();
+  const unitsLeft = new Map<string, Map<string, number>>();
+
+  for (const claim of claims) {
+    if (oneClaimPerOffer && offerClaimTaken) continue;
+    if (oneClaimPerTier && tiersAlreadyClaimed.has(claim.tierId)) continue;
+
+    let byVariant = unitsLeft.get(claim.tierId);
+    if (byVariant === undefined) {
+      byVariant = new Map<string, number>();
+      unitsLeft.set(claim.tierId, byVariant);
+    }
+    let remaining = byVariant.get(claim.entry.variantId);
+    if (remaining === undefined) remaining = claim.entry.maxQty;
+
+    if (remaining <= 0) continue;
+
+    const discountQuantity = Math.min(claim.quantity, remaining);
+    byVariant.set(claim.entry.variantId, remaining - discountQuantity);
+    if (oneClaimPerOffer) offerClaimTaken = true;
+    if (oneClaimPerTier) tiersAlreadyClaimed.add(claim.tierId);
+
+    result.set(claim.lineId, {
+      valid: true,
+      entry: claim.entry,
+      discountQuantity,
+    });
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Mutant 17 — the `quantity <= 0` guard is dropped entirely, so a line with
+// nothing on it can still enter arbitration and consume a tier's PICK_ONE
+// (or an offer's SINGLE) budget that a real line could have used.
+// ---------------------------------------------------------------------------
+
+/** collectClaims, but without the `line.quantity <= 0` exclusion. */
+function collectClaims_noQuantityGuard(
+  cart: Cart,
+  offer: Offer,
+  gifts: GiftEntitlement[]
+): Claim[] {
+  const claims: Claim[] = [];
+  for (const line of cart.lines) {
+    if (line.giftOfferId === undefined) continue;
+    const matched = matchClaim(gifts, offer, line);
+    if (matched === null) continue;
+    // BUG: missing `if (line.quantity <= 0) continue;` — a zero- or
+    // negative-quantity claim still competes for, and can win, budget.
+    claims.push({
+      lineId: line.id,
+      quantity: line.quantity,
+      tierId: matched.tierId,
+      entry: matched.entry,
+      value: claimValue(matched.entry, line.unitPrice),
+    });
+  }
+  return claims;
+}
+
+export function mutant17_nonpositiveQuantityConsumesBudget(
+  cart: Cart,
+  offer: Offer
+): Map<string, GiftValidation> {
+  const result = new Map<string, GiftValidation>();
+  const entitlements = resolveOffer(cart, offer);
+
+  for (const line of cart.lines) {
+    if (line.giftOfferId !== undefined) result.set(line.id, REJECTED);
+  }
+
+  const claims = collectClaims_noQuantityGuard(cart, offer, entitlements.gifts);
+
+  claims.sort((a, b) => {
+    if (a.value !== b.value) return a.value > b.value ? -1 : 1;
     return compareIdsByUtf8(a.lineId, b.lineId);
   });
 

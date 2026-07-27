@@ -752,6 +752,82 @@ export function generateValidationVectors(): ValidationVector[] {
     )
   );
 
+  // claimValue's PERCENT branch only matters when flooring vs rounding
+  // flips which claim wins. 'lz' claims a PERCENT-50%... no: PERCENT
+  // value:10 on unitPrice:105 -> floor(105*10/100) = floor(10.5) = 10.
+  // 'la' claims FIXED value:10 on unitPrice:1000 -> min(10, 1000) = 10,
+  // same either way. Flooring ties both claims at 10, and the id tie-break
+  // (byte-lexicographic ascending) picks 'la' since 'la' < 'lz'. A mutant
+  // that rounds instead — (unitPrice * value + 50) / 100 with integer
+  // division — computes (1050 + 50) / 100 = 11 for 'lz', which then wins
+  // outright instead of losing the tie. Different winner, not just a
+  // different number, so this vector discriminates flooring from rounding.
+  vectors.push(
+    buildValidationVector(
+      'validation/percent-floor-vs-round-tie-break',
+      {
+        lines: [
+          spendLine('l1', 16000),
+          claimLine('lz', 'round-percent', { unitPrice: 105 }),
+          claimLine('la', 'round-fixed', { unitPrice: 1000 }),
+        ],
+      },
+      validationOffer({
+        tiers: [
+          {
+            id: 'v-t1',
+            threshold: 10000,
+            reward: 'GIFT',
+            giftPool: [
+              gift('round-percent', { discountType: 'PERCENT', value: 10 }),
+              gift('round-fixed', { discountType: 'FIXED', value: 10 }),
+            ],
+          },
+        ],
+      })
+    )
+  );
+
+  // A zero- or negative-quantity claim must not consume the tier's PICK_ONE
+  // budget — a line with nothing on it cannot receive a discount, and must
+  // not crowd out a real line that could have used that budget. Three lines
+  // claim three distinct entries in the same PICK_ONE tier: 'lreal' has
+  // quantity 1 and the lowest claim value (3000, FREE == unitPrice);
+  // 'lzero' has quantity 0 and a higher value (9000); 'lneg' has quantity
+  // -2 and the highest value (12000). With the `quantity <= 0` guard, both
+  // 'lzero' and 'lneg' are excluded before arbitration and 'lreal' wins the
+  // tier's one slot. Without the guard, 'lneg' sorts first by value, wins
+  // the slot with a nonsensical negative discountQuantity, and 'lreal' is
+  // rejected outright even though it is the only line with anything to
+  // discount.
+  vectors.push(
+    buildValidationVector(
+      'validation/nonpositive-quantity-does-not-consume-budget',
+      {
+        lines: [
+          spendLine('l1', 16000),
+          claimLine('lreal', 'zq-real', { unitPrice: 3000, quantity: 1 }),
+          claimLine('lzero', 'zq-zero', { unitPrice: 9000, quantity: 0 }),
+          claimLine('lneg', 'zq-neg', { unitPrice: 12000, quantity: -2 }),
+        ],
+      },
+      validationOffer({
+        tiers: [
+          {
+            id: 'v-t1',
+            threshold: 10000,
+            reward: 'GIFT',
+            giftPool: [
+              gift('zq-real', { discountType: 'FREE', value: 0 }),
+              gift('zq-zero', { discountType: 'FREE', value: 0 }),
+              gift('zq-neg', { discountType: 'FREE', value: 0 }),
+            ],
+          },
+        ],
+      })
+    )
+  );
+
   return vectors;
 }
 

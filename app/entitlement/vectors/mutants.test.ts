@@ -180,6 +180,17 @@ const validationMutants: ValidationMutantSpec[] = [
     summary: 'lowest-value claim wins — inverted arbitration sort',
     run: mutants.mutant15_lowestValueClaimWins,
   },
+  {
+    id: 'M16',
+    summary: 'PERCENT claim value rounds instead of flooring (spec §6)',
+    run: mutants.mutant16_percentRoundsInsteadOfFloors,
+  },
+  {
+    id: 'M17',
+    summary:
+      'zero- or negative-quantity claims are not excluded from arbitration and can consume budget',
+    run: mutants.mutant17_nonpositiveQuantityConsumesBudget,
+  },
 ];
 
 describe('mutation harness — gift-claim arbitration (validation-golden.json)', () => {
