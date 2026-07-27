@@ -1,0 +1,4203 @@
+[
+  {
+    "name": "empty-offer-list",
+    "verbose": [],
+    "compact": {
+      "v": 1,
+      "o": []
+    }
+  },
+  {
+    "name": "minimal-single-offer",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "trigger-SUBTOTAL",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "trigger-QUANTITY",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "QUANTITY",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 1,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "reward-FREE_SHIPPING-no-value",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "reward-ORDER_PERCENT",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 5000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 10
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 5000,
+              "r": 1,
+              "v": 10
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "reward-ORDER_FIXED",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 5000,
+            "reward": "ORDER_FIXED",
+            "giftPool": [],
+            "value": 500
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 5000,
+              "r": 2,
+              "v": 500
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "reward-GIFT",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 5000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000000",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              }
+            ]
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 5000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000000,
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "gift-discount-FREE",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 5000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000001",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              }
+            ]
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 5000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000001,
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "gift-discount-PERCENT",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 5000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000002",
+                "discountType": "PERCENT",
+                "value": 25,
+                "maxQty": 2
+              }
+            ]
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 5000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000002,
+                  1,
+                  25,
+                  2
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "gift-discount-FIXED",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 5000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000003",
+                "discountType": "FIXED",
+                "value": 1500,
+                "maxQty": 3
+              }
+            ]
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 5000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000003,
+                  2,
+                  1500,
+                  3
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "within-ALL_IN_POOL",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "within-PICK_ONE",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "PICK_ONE",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 1,
+          "a": 0,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "across-STACK-no-resolution",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "across-SINGLE-HIGHEST",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "SINGLE",
+          "singleResolution": "HIGHEST"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 1,
+          "s": 0,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "across-SINGLE-PINNED-with-pinned-tier-id",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "PICK_ONE",
+          "acrossTiers": "SINGLE",
+          "singleResolution": "PINNED",
+          "pinnedTierId": "o1t1"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 1,
+          "a": 1,
+          "s": 1,
+          "p": "o1t1",
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "across-SINGLE-PINNED-without-pinned-tier-id",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "PICK_ONE",
+          "acrossTiers": "SINGLE",
+          "singleResolution": "PINNED"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 1,
+          "a": 1,
+          "s": 1,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "across-SINGLE-CUSTOMER_CHOICE",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "SINGLE",
+          "singleResolution": "CUSTOMER_CHOICE"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 1,
+          "s": 2,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "across-STACK-with-stray-pinned-tier-id",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK",
+          "pinnedTierId": "o1t1"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "p": "o1t1",
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "scope-ENTIRE_CART-empty-ids",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "scope-COLLECTIONS-empty-list",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "COLLECTIONS",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "y": 1,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "scope-COLLECTIONS-populated",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "COLLECTIONS",
+          "ids": [
+            "gid://shopify/Collection/400000001",
+            "gid://shopify/Collection/400000002"
+          ]
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "y": 1,
+          "c": [
+            400000001,
+            400000002
+          ],
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "scope-PRODUCTS-empty-list",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "PRODUCTS",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "y": 2,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "scope-PRODUCTS-populated",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "PRODUCTS",
+          "ids": [
+            "gid://shopify/Product/700000001",
+            "gid://shopify/Product/700000002",
+            "gid://shopify/Product/700000003"
+          ]
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "y": 2,
+          "c": [
+            700000001,
+            700000002,
+            700000003
+          ],
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "scope-COLLECTIONS-non-gid-id-kept-verbatim",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "COLLECTIONS",
+          "ids": [
+            "legacy-collection-handle"
+          ]
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "y": 1,
+          "c": [
+            "legacy-collection-handle"
+          ],
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "audience-empty-tags-and-markets",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "audience-tags-only",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [
+            "vip",
+            "wholesale"
+          ],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "x": [
+            "vip",
+            "wholesale"
+          ],
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "audience-markets-only",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": [
+            "US",
+            "CA",
+            "GB"
+          ]
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "m": [
+            "US",
+            "CA",
+            "GB"
+          ],
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "audience-tags-and-markets",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [
+            "vip"
+          ],
+          "markets": [
+            "DE"
+          ]
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "x": [
+            "vip"
+          ],
+          "m": [
+            "DE"
+          ],
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "audience-non-ascii-tag",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "o1t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [
+            "großhandel",
+            "卸売"
+          ],
+          "markets": [
+            "JP"
+          ]
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "x": [
+            "großhandel",
+            "卸売"
+          ],
+          "m": [
+            "JP"
+          ],
+          "r": [
+            {
+              "i": "o1t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "tier-value-absent",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 5000,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "tier-value-present-zero",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 5000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 0
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 5000,
+              "r": 1,
+              "v": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "gift-pool-empty-on-gift-tier",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 5000,
+            "reward": "GIFT",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 5000,
+              "r": 3
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "gift-pool-mixed-discount-types",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 5000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000010",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000011",
+                "discountType": "PERCENT",
+                "value": 50,
+                "maxQty": 2
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000012",
+                "discountType": "FIXED",
+                "value": 999,
+                "maxQty": 4
+              }
+            ]
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 5000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000010,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000011,
+                  1,
+                  50,
+                  2
+                ],
+                [
+                  1000000000012,
+                  2,
+                  999,
+                  4
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "boundary-zero-threshold",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 0,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 0,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "boundary-percent-100",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 1,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 100
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 1,
+              "r": 1,
+              "v": 100
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "boundary-large-threshold",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 9007199254740991,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 9007199254740991,
+              "r": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "boundary-max-safe-variant-id",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 100,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/9007199254740991",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              }
+            ]
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 100,
+              "r": 3,
+              "g": [
+                [
+                  9007199254740991,
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "boundary-variant-id-past-max-safe-stays-a-string",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 100,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/9007199254740993",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              }
+            ]
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 100,
+              "r": 3,
+              "g": [
+                [
+                  "gid://shopify/ProductVariant/9007199254740993",
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "boundary-non-gid-variant-id-kept-verbatim",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 100,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "v-mug",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              }
+            ]
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 100,
+              "r": 3,
+              "g": [
+                [
+                  "v-mug",
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "boundary-bare-numeric-variant-id-stays-a-string",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 100,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "1000000000000",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              }
+            ]
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 100,
+              "r": 3,
+              "g": [
+                [
+                  "1000000000000",
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "boundary-gid-tail-with-leading-zero-stays-a-string",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 100,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/0123",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              }
+            ]
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 100,
+              "r": 3,
+              "g": [
+                [
+                  "gid://shopify/ProductVariant/0123",
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "boundary-gift-zero-max-qty",
+    "verbose": [
+      {
+        "id": "o1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "t1",
+            "threshold": 100,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000020",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 0
+              }
+            ]
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "o1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "t1",
+              "t": 100,
+              "r": 3,
+              "g": [
+                [
+                  1000000000020,
+                  0,
+                  0,
+                  0
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "multi-offer-three-with-distinct-policies",
+    "verbose": [
+      {
+        "id": "oA",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "oAt1",
+            "threshold": 5000,
+            "reward": "FREE_SHIPPING",
+            "giftPool": []
+          },
+          {
+            "id": "oAt2",
+            "threshold": 10000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 10
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "oB",
+        "trigger": "QUANTITY",
+        "claimPolicy": {
+          "withinTier": "PICK_ONE",
+          "acrossTiers": "SINGLE",
+          "singleResolution": "PINNED",
+          "pinnedTierId": "oBt2"
+        },
+        "tiers": [
+          {
+            "id": "oBt1",
+            "threshold": 2,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000030",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000031",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "oBt2",
+            "threshold": 4,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000032",
+                "discountType": "PERCENT",
+                "value": 30,
+                "maxQty": 1
+              }
+            ]
+          }
+        ],
+        "scope": {
+          "kind": "COLLECTIONS",
+          "ids": [
+            "gid://shopify/Collection/400000009"
+          ]
+        },
+        "audience": {
+          "customerTags": [
+            "vip"
+          ],
+          "markets": [
+            "US"
+          ]
+        }
+      },
+      {
+        "id": "oC",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "SINGLE",
+          "singleResolution": "CUSTOMER_CHOICE"
+        },
+        "tiers": [
+          {
+            "id": "oCt1",
+            "threshold": 7500,
+            "reward": "ORDER_FIXED",
+            "giftPool": [],
+            "value": 1000
+          }
+        ],
+        "scope": {
+          "kind": "PRODUCTS",
+          "ids": [
+            "gid://shopify/Product/700000005"
+          ]
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "oA",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "oAt1",
+              "t": 5000,
+              "r": 0
+            },
+            {
+              "i": "oAt2",
+              "t": 10000,
+              "r": 1,
+              "v": 10
+            }
+          ]
+        },
+        {
+          "i": "oB",
+          "t": 1,
+          "w": 1,
+          "a": 1,
+          "s": 1,
+          "p": "oBt2",
+          "y": 1,
+          "c": [
+            400000009
+          ],
+          "x": [
+            "vip"
+          ],
+          "m": [
+            "US"
+          ],
+          "r": [
+            {
+              "i": "oBt1",
+              "t": 2,
+              "r": 3,
+              "g": [
+                [
+                  1000000000030,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000031,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "oBt2",
+              "t": 4,
+              "r": 3,
+              "g": [
+                [
+                  1000000000032,
+                  1,
+                  30,
+                  1
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "i": "oC",
+          "t": 0,
+          "w": 0,
+          "a": 1,
+          "s": 2,
+          "y": 2,
+          "c": [
+            700000005
+          ],
+          "r": [
+            {
+              "i": "oCt1",
+              "t": 7500,
+              "r": 2,
+              "v": 1000
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "shard-one-when-everything-fits",
+    "verbose": [
+      {
+        "id": "os1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os1t1",
+            "threshold": 5000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000101",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000201",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os1t2",
+            "threshold": 10000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 1
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "os2",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os2t1",
+            "threshold": 10000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000102",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000202",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os2t2",
+            "threshold": 20000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 2
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "os3",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os3t1",
+            "threshold": 15000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000103",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000203",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os3t2",
+            "threshold": 30000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 3
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "os4",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os4t1",
+            "threshold": 20000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000104",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000204",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os4t2",
+            "threshold": 40000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 4
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "os5",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os5t1",
+            "threshold": 25000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000105",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000205",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os5t2",
+            "threshold": 50000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 5
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "os1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os1t1",
+              "t": 5000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000101,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000201,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os1t2",
+              "t": 10000,
+              "r": 1,
+              "v": 1
+            }
+          ]
+        },
+        {
+          "i": "os2",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os2t1",
+              "t": 10000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000102,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000202,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os2t2",
+              "t": 20000,
+              "r": 1,
+              "v": 2
+            }
+          ]
+        },
+        {
+          "i": "os3",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os3t1",
+              "t": 15000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000103,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000203,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os3t2",
+              "t": 30000,
+              "r": 1,
+              "v": 3
+            }
+          ]
+        },
+        {
+          "i": "os4",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os4t1",
+              "t": 20000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000104,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000204,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os4t2",
+              "t": 40000,
+              "r": 1,
+              "v": 4
+            }
+          ]
+        },
+        {
+          "i": "os5",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os5t1",
+              "t": 25000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000105,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000205,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os5t2",
+              "t": 50000,
+              "r": 1,
+              "v": 5
+            }
+          ]
+        }
+      ]
+    },
+    "shardLimit": 10000,
+    "shards": [
+      {
+        "v": 1,
+        "o": [
+          {
+            "i": "os1",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os1t1",
+                "t": 5000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000101,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000201,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os1t2",
+                "t": 10000,
+                "r": 1,
+                "v": 1
+              }
+            ]
+          },
+          {
+            "i": "os2",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os2t1",
+                "t": 10000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000102,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000202,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os2t2",
+                "t": 20000,
+                "r": 1,
+                "v": 2
+              }
+            ]
+          },
+          {
+            "i": "os3",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os3t1",
+                "t": 15000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000103,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000203,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os3t2",
+                "t": 30000,
+                "r": 1,
+                "v": 3
+              }
+            ]
+          },
+          {
+            "i": "os4",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os4t1",
+                "t": 20000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000104,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000204,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os4t2",
+                "t": 40000,
+                "r": 1,
+                "v": 4
+              }
+            ]
+          },
+          {
+            "i": "os5",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os5t1",
+                "t": 25000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000105,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000205,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os5t2",
+                "t": 50000,
+                "r": 1,
+                "v": 5
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "shard-two",
+    "verbose": [
+      {
+        "id": "os1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os1t1",
+            "threshold": 5000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000101",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000201",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os1t2",
+            "threshold": 10000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 1
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "os2",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os2t1",
+            "threshold": 10000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000102",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000202",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os2t2",
+            "threshold": 20000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 2
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "os3",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os3t1",
+            "threshold": 15000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000103",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000203",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os3t2",
+            "threshold": 30000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 3
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "os4",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os4t1",
+            "threshold": 20000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000104",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000204",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os4t2",
+            "threshold": 40000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 4
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "os5",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os5t1",
+            "threshold": 25000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000105",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000205",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os5t2",
+            "threshold": 50000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 5
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "os1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os1t1",
+              "t": 5000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000101,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000201,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os1t2",
+              "t": 10000,
+              "r": 1,
+              "v": 1
+            }
+          ]
+        },
+        {
+          "i": "os2",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os2t1",
+              "t": 10000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000102,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000202,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os2t2",
+              "t": 20000,
+              "r": 1,
+              "v": 2
+            }
+          ]
+        },
+        {
+          "i": "os3",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os3t1",
+              "t": 15000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000103,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000203,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os3t2",
+              "t": 30000,
+              "r": 1,
+              "v": 3
+            }
+          ]
+        },
+        {
+          "i": "os4",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os4t1",
+              "t": 20000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000104,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000204,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os4t2",
+              "t": 40000,
+              "r": 1,
+              "v": 4
+            }
+          ]
+        },
+        {
+          "i": "os5",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os5t1",
+              "t": 25000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000105,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000205,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os5t2",
+              "t": 50000,
+              "r": 1,
+              "v": 5
+            }
+          ]
+        }
+      ]
+    },
+    "shardLimit": 500,
+    "shards": [
+      {
+        "v": 1,
+        "k": 0,
+        "n": 2,
+        "o": [
+          {
+            "i": "os1",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os1t1",
+                "t": 5000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000101,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000201,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os1t2",
+                "t": 10000,
+                "r": 1,
+                "v": 1
+              }
+            ]
+          },
+          {
+            "i": "os2",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os2t1",
+                "t": 10000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000102,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000202,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os2t2",
+                "t": 20000,
+                "r": 1,
+                "v": 2
+              }
+            ]
+          },
+          {
+            "i": "os3",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os3t1",
+                "t": 15000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000103,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000203,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os3t2",
+                "t": 30000,
+                "r": 1,
+                "v": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "v": 1,
+        "k": 1,
+        "n": 2,
+        "o": [
+          {
+            "i": "os4",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os4t1",
+                "t": 20000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000104,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000204,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os4t2",
+                "t": 40000,
+                "r": 1,
+                "v": 4
+              }
+            ]
+          },
+          {
+            "i": "os5",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os5t1",
+                "t": 25000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000105,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000205,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os5t2",
+                "t": 50000,
+                "r": 1,
+                "v": 5
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "shard-three",
+    "verbose": [
+      {
+        "id": "os1",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os1t1",
+            "threshold": 5000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000101",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000201",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os1t2",
+            "threshold": 10000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 1
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "os2",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os2t1",
+            "threshold": 10000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000102",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000202",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os2t2",
+            "threshold": 20000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 2
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "os3",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os3t1",
+            "threshold": 15000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000103",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000203",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os3t2",
+            "threshold": 30000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 3
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "os4",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os4t1",
+            "threshold": 20000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000104",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000204",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os4t2",
+            "threshold": 40000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 4
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      },
+      {
+        "id": "os5",
+        "trigger": "SUBTOTAL",
+        "claimPolicy": {
+          "withinTier": "ALL_IN_POOL",
+          "acrossTiers": "STACK"
+        },
+        "tiers": [
+          {
+            "id": "os5t1",
+            "threshold": 25000,
+            "reward": "GIFT",
+            "giftPool": [
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000105",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 1
+              },
+              {
+                "variantId": "gid://shopify/ProductVariant/1000000000205",
+                "discountType": "FREE",
+                "value": 0,
+                "maxQty": 2
+              }
+            ]
+          },
+          {
+            "id": "os5t2",
+            "threshold": 50000,
+            "reward": "ORDER_PERCENT",
+            "giftPool": [],
+            "value": 5
+          }
+        ],
+        "scope": {
+          "kind": "ENTIRE_CART",
+          "ids": []
+        },
+        "audience": {
+          "customerTags": [],
+          "markets": []
+        }
+      }
+    ],
+    "compact": {
+      "v": 1,
+      "o": [
+        {
+          "i": "os1",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os1t1",
+              "t": 5000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000101,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000201,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os1t2",
+              "t": 10000,
+              "r": 1,
+              "v": 1
+            }
+          ]
+        },
+        {
+          "i": "os2",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os2t1",
+              "t": 10000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000102,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000202,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os2t2",
+              "t": 20000,
+              "r": 1,
+              "v": 2
+            }
+          ]
+        },
+        {
+          "i": "os3",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os3t1",
+              "t": 15000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000103,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000203,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os3t2",
+              "t": 30000,
+              "r": 1,
+              "v": 3
+            }
+          ]
+        },
+        {
+          "i": "os4",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os4t1",
+              "t": 20000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000104,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000204,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os4t2",
+              "t": 40000,
+              "r": 1,
+              "v": 4
+            }
+          ]
+        },
+        {
+          "i": "os5",
+          "t": 0,
+          "w": 0,
+          "a": 0,
+          "r": [
+            {
+              "i": "os5t1",
+              "t": 25000,
+              "r": 3,
+              "g": [
+                [
+                  1000000000105,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1000000000205,
+                  0,
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "i": "os5t2",
+              "t": 50000,
+              "r": 1,
+              "v": 5
+            }
+          ]
+        }
+      ]
+    },
+    "shardLimit": 340,
+    "shards": [
+      {
+        "v": 1,
+        "k": 0,
+        "n": 3,
+        "o": [
+          {
+            "i": "os1",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os1t1",
+                "t": 5000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000101,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000201,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os1t2",
+                "t": 10000,
+                "r": 1,
+                "v": 1
+              }
+            ]
+          },
+          {
+            "i": "os2",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os2t1",
+                "t": 10000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000102,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000202,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os2t2",
+                "t": 20000,
+                "r": 1,
+                "v": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "v": 1,
+        "k": 1,
+        "n": 3,
+        "o": [
+          {
+            "i": "os3",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os3t1",
+                "t": 15000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000103,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000203,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os3t2",
+                "t": 30000,
+                "r": 1,
+                "v": 3
+              }
+            ]
+          },
+          {
+            "i": "os4",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os4t1",
+                "t": 20000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000104,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000204,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os4t2",
+                "t": 40000,
+                "r": 1,
+                "v": 4
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "v": 1,
+        "k": 2,
+        "n": 3,
+        "o": [
+          {
+            "i": "os5",
+            "t": 0,
+            "w": 0,
+            "a": 0,
+            "r": [
+              {
+                "i": "os5t1",
+                "t": 25000,
+                "r": 3,
+                "g": [
+                  [
+                    1000000000105,
+                    0,
+                    0,
+                    1
+                  ],
+                  [
+                    1000000000205,
+                    0,
+                    0,
+                    2
+                  ]
+                ]
+              },
+              {
+                "i": "os5t2",
+                "t": 50000,
+                "r": 1,
+                "v": 5
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
