@@ -224,3 +224,30 @@ Nothing before this proves the discount actually applies. **Requires a human** �
 - **The scope-resolution approach chosen in Task 23 Step 2.** The widget must mirror it **conservatively** — under-counting rather than over-counting when uncertain. An under-promising bar is cosmetic; an over-promising one charges the customer for something the bar said was free.
 - **The mutation harness** (`app/entitlement/vectors/mutants.test.ts`) stays the gate. Any new entitlement behaviour ships with vectors *and* a mutant in the same commit.
 - **Unverified:** JSON metafield size limit against a realistic max config, and whether market/country is exposed on the function input. Both flagged in spec §13 and still outstanding.
+
+---
+
+## Task 26: Compact config encoding and publish-time size validation
+
+Added 2026-07-27 after measurement. **This is a prerequisite for Task 23**, not a follow-up.
+
+Shopify Functions cap metafield values at **10,000 bytes** in input queries (total input 64,000) and deliver an oversized value as a **silent `null`** — the function then grants nothing and every offer in the shop stops working with no signal.
+
+Measured against a verbose config:
+
+| Config | Verbose | Compact |
+|---|---|---|
+| 1 × 3 × 3 (Free plan) | 1,271 B | 369 B |
+| 5 × 6 × 5 (Growth plan) | **16,858 B — over cap** | 4,243 B |
+| 10 × 6 × 5 | **33,698 B — over cap** | 8,473 B |
+
+The Growth plan does not fit without compaction. Only 2 offers fit verbose; 11 fit compact.
+
+- [ ] **Step 1:** Define the compact wire format for the **function** payload: bare numeric ids rather than GIDs (`gid://shopify/ProductVariant/1000000000000` is 42 bytes, `1000000000000` is 13), single-character keys, enums as small integers, gift pool entries as positional arrays. Document the mapping in `docs/` — Rust and TypeScript both decode it, so it is a contract like the vectors.
+- [ ] **Step 2:** Keep the **widget** payload verbose and readable. It goes to the shop metafield under the 128 KB `json` cap (25 offers ≈ 95 KB) and carries design tokens, copy, and placement the function never reads. Do not compact it; the widget budget is not scarce and readability aids support.
+- [ ] **Step 3:** Implement encode (TypeScript, publish side) and decode (Rust, function side). Round-trip test: verbose → compact → decoded must equal the original semantics. Add golden vectors for the encoding itself so the two decoders cannot drift.
+- [ ] **Step 4:** **Publish-time size validation.** Refuse to publish when the compact payload exceeds the cap, with a message naming what to cut. Because the failure mode is a silent `null`, the merchant must learn this at publish time, never from a broken storefront.
+- [ ] **Step 5:** Above ~11 offers, shard the function config across several discount-node metafields read together in the input query. The 64,000-byte total input cap allows roughly 70 offers at 4–6 shards. Implement sharding only when a plan tier requires it; validation from Step 4 is the gate until then.
+- [ ] **Step 6:** Commit.
+
+**Plan caps revised in spec §10 as a result:** Pro is **25 offers / 12 tiers**, not unlimited. "Unlimited" was never deliverable under these limits.
