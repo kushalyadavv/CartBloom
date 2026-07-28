@@ -189,6 +189,42 @@ const DRAWER_SELECTORS = [
 
 const COMMON_CART_SECTIONS = ['cart-drawer', 'cart-items', 'main-cart-items', 'cart-icon-bubble'];
 
+/**
+ * Swap markup that a mutation response already carried.
+ *
+ * Preferred over refreshCartSections: the markup came back with the mutation,
+ * so it reflects the post-mutation cart and cannot race the write.
+ */
+export function applySections(sections: Record<string, string>): boolean {
+  for (const [id, markup] of Object.entries(sections)) {
+    if (typeof markup !== 'string' || markup === '') continue;
+
+    const parsed = new DOMParser().parseFromString(markup, 'text/html');
+    const incoming = parsed.getElementById(`shopify-section-${id}`) ?? parsed.body;
+
+    const wrapper = document.getElementById(`shopify-section-${id}`);
+    if (wrapper !== null) {
+      wrapper.innerHTML = incoming.innerHTML;
+      return true;
+    }
+
+    for (const selector of DRAWER_SELECTORS) {
+      const incomingDrawer = incoming.querySelector(selector);
+      const liveDrawer = document.querySelector(selector);
+      if (incomingDrawer === null || liveDrawer === null) continue;
+      liveDrawer.innerHTML = incomingDrawer.innerHTML;
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Section names to ask for alongside a cart mutation. */
+export function sectionsToRequest(): string[] {
+  const discovered = cartSectionIds();
+  return discovered.length > 0 ? discovered : ['cart-drawer'];
+}
+
 export async function refreshCartSections(discovered: string[] = cartSectionIds()): Promise<boolean> {
   const candidates = discovered.length > 0 ? discovered : COMMON_CART_SECTIONS;
 

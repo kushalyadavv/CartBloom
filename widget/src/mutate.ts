@@ -55,6 +55,17 @@ export class MutationQueue {
   }
 }
 
+/**
+ * Sections to request alongside a mutation.
+ *
+ * Asking for them in the mutation itself is the point: the response carries
+ * markup rendered from the *post-mutation* cart, atomically. Refreshing
+ * separately afterwards races the write — the section render can still see the
+ * old cart, so the drawer swaps in markup without the gift that was just added
+ * and it looks as though nothing happened.
+ */
+export type SectionRequest = string[];
+
 async function postJson(url: string, body: unknown): Promise<Response> {
   const response = await fetch(url, {
     method: 'POST',
@@ -85,7 +96,8 @@ export function numericVariantId(variantId: string): number {
 
 export function addGift(
   claim: GiftClaim,
-  routes: Partial<CartRoutes> = {}
+  routes: Partial<CartRoutes> = {},
+  sections: SectionRequest = []
 ): Promise<Response> {
   const url = asJs(routes.cartAdd ?? DEFAULT_ROUTES.cartAdd);
   return postJson(url, {
@@ -102,15 +114,21 @@ export function addGift(
         },
       },
     ],
+    ...(sections.length > 0 ? { sections: sections.join(',') } : {}),
   });
 }
 
 export function removeLine(
   lineKey: string,
-  routes: Partial<CartRoutes> = {}
+  routes: Partial<CartRoutes> = {},
+  sections: SectionRequest = []
 ): Promise<Response> {
   const url = asJs(routes.cartChange ?? DEFAULT_ROUTES.cartChange);
-  return postJson(url, { id: lineKey, quantity: 0 });
+  return postJson(url, {
+    id: lineKey,
+    quantity: 0,
+    ...(sections.length > 0 ? { sections: sections.join(',') } : {}),
+  });
 }
 
 /**
@@ -124,8 +142,9 @@ export function removeLine(
 export async function swapGift(
   previousLineKey: string,
   claim: GiftClaim,
-  routes: Partial<CartRoutes> = {}
+  routes: Partial<CartRoutes> = {},
+  sections: SectionRequest = []
 ): Promise<Response> {
   await removeLine(previousLineKey, routes);
-  return addGift(claim, routes);
+  return addGift(claim, routes, sections);
 }

@@ -16,7 +16,7 @@ import {
   type Offer,
   type OfferEntitlements,
 } from '../../app/entitlement';
-import { onCartChange, fetchCart, refreshCartSections, type AjaxCart, type AjaxCartLine } from './cart';
+import { onCartChange, fetchCart, refreshCartSections, applySections, sectionsToRequest, type AjaxCart, type AjaxCartLine } from './cart';
 import { keepMounted, findDrawerMount, type MountResult } from './mount';
 import { renderOffer, renderChooser, tokenStyle, type RenderOffer, type GiftDisplay } from './render';
 import { MutationQueue, addGift, removeLine, swapGift, type CartRoutes } from './mutate';
@@ -269,14 +269,28 @@ function boot(): void {
 
         // Clicking the selected option again is a deselect, not a no-op —
         // a shopper who changes their mind should be able to take nothing.
+        const want = sectionsToRequest();
+        let response: Response;
+
         if (existing?.variantId === variantId) {
-          await removeLine(existing.key, routes);
+          response = await removeLine(existing.key, routes, want);
         } else if (existing !== undefined) {
-          await swapGift(existing.key, { variantId, offerId, tierId }, routes);
+          response = await swapGift(existing.key, { variantId, offerId, tierId }, routes, want);
         } else {
-          await addGift({ variantId, offerId, tierId }, routes);
+          response = await addGift({ variantId, offerId, tierId }, routes, want);
         }
-        return refreshAndRepaint();
+
+        // The mutation response carries markup rendered from the post-mutation
+        // cart, so applying it cannot race the write. Only fall back to a
+        // separate fetch if the theme returned no sections.
+        const body = (await response.json()) as { sections?: Record<string, string> };
+        const swapped = body.sections !== undefined && applySections(body.sections);
+        if (!swapped) await refreshCartSections().catch(() => false);
+
+        for (const el of [...hosts.keys()]) if (!el.isConnected) hosts.delete(el);
+        adoptDeclaredHosts();
+        attach(findDrawerMount());
+        paint(await fetchCart(cartUrl));
       })
       .catch(() => {
         notice = 'We could not update your gift. Please try again.';
