@@ -190,48 +190,54 @@ const DRAWER_SELECTORS = [
 const COMMON_CART_SECTIONS = ['cart-drawer', 'cart-items', 'main-cart-items', 'cart-icon-bubble'];
 
 export async function refreshCartSections(discovered: string[] = cartSectionIds()): Promise<boolean> {
-  const ids = discovered.length > 0 ? discovered : COMMON_CART_SECTIONS;
-  if (ids.length === 0) return false;
+  const candidates = discovered.length > 0 ? discovered : COMMON_CART_SECTIONS;
 
-  // Cache-busted deliberately. Section Rendering responses are cacheable, and a
-  // stale one renders the cart as it was — most visibly `is-empty` on a cart
-  // that is not. Swapping that in looks identical to the refresh doing nothing,
-  // which is exactly how this presented: the drawer only showed a claimed gift
-  // after a full page load, because only that bypassed the cache.
-  const url =
-    `${window.location.pathname}?sections=${encodeURIComponent(ids.join(','))}` +
-    `&_=${Date.now()}`;
+  // One section per request, not all of them at once.
+  //
+  // The Section Rendering API fails the *whole* request if any requested
+  // section does not exist on the theme, so asking for four speculative names
+  // meant a single miss silently refreshed nothing. That is exactly what
+  // happened: a hand-run request for `cart-drawer` alone worked while the
+  // widget's four-name request returned a non-OK response and gave up.
+  for (const id of candidates) {
+    // Cache-busted deliberately. Section Rendering responses are cacheable, and
+    // a stale one renders the cart as it was -- most visibly `is-empty` on a
+    // cart that is not, which is indistinguishable from the refresh doing
+    // nothing.
+    const url = `${window.location.pathname}?sections=${encodeURIComponent(id)}&_=${Date.now()}`;
 
-  const response = await fetch(url, {
-    headers: { Accept: 'application/json' },
-    credentials: 'same-origin',
-    cache: 'no-store',
-  });
-  if (!response.ok) return false;
+    let markup: string;
+    try {
+      const response = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+        cache: 'no-store',
+      });
+      if (!response.ok) continue;
 
-  const sections = (await response.json()) as Record<string, string>;
-  let replaced = false;
-
-  for (const id of ids) {
-    const markup = sections[id];
-    if (typeof markup !== 'string' || markup === '') continue;
+      const sections = (await response.json()) as Record<string, string>;
+      const value = sections[id];
+      if (typeof value !== 'string' || value === '') continue;
+      markup = value;
+    } catch {
+      continue;
+    }
 
     const parsed = new DOMParser().parseFromString(markup, 'text/html');
     const incoming = parsed.getElementById(`shopify-section-${id}`) ?? parsed.body;
 
-    // Preferred: the section wrapper is on the page and we replace its contents.
+    // Preferred: the section wrapper is on the page, so replace its contents.
     const wrapper = document.getElementById(`shopify-section-${id}`);
     if (wrapper !== null) {
       wrapper.innerHTML = incoming.innerHTML;
-      replaced = true;
-      continue;
+      return true;
     }
 
     // Otherwise the theme rendered this from the layout rather than as a
-    // section, so there is no wrapper to replace. Find the drawer in both the
-    // response and the page and swap that specific element.
+    // section. Find the drawer in both the response and the page and swap that
+    // specific element.
     //
-    // Deliberately narrow. An earlier version matched on the returned root's
+    // Deliberately narrow: an earlier version matched on the returned root's
     // tag name and called document.querySelector(tag), which for a <div> root
     // selects an arbitrary div anywhere on the page and overwrites it.
     for (const selector of DRAWER_SELECTORS) {
@@ -240,10 +246,9 @@ export async function refreshCartSections(discovered: string[] = cartSectionIds(
       if (incomingDrawer === null || liveDrawer === null) continue;
 
       liveDrawer.innerHTML = incomingDrawer.innerHTML;
-      replaced = true;
-      break;
+      return true;
     }
   }
 
-  return replaced;
+  return false;
 }

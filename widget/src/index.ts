@@ -300,7 +300,12 @@ function boot(): void {
    * host along with the theme's markup, so mounting has to happen again.
    */
   const refreshAndRepaint = async (): Promise<void> => {
-    const replaced = await refreshCartSections().catch(() => false);
+    // Not swallowed. A silent failure here looks identical to the refresh
+    // working, which cost several rounds of diagnosis.
+    const replaced = await refreshCartSections().catch((error: unknown) => {
+      console.warn('[CartBloom] section refresh failed', error);
+      return false;
+    });
     if (replaced) {
       // The swap destroyed the markup, and our hosts with it.
       for (const el of [...hosts.keys()]) if (!el.isConnected) hosts.delete(el);
