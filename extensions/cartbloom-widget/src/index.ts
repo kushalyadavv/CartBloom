@@ -21,9 +21,10 @@ import { observeForMount, type MountResult } from './mount';
 import { renderOffer, renderChooser, tokenStyle, type RenderOffer, type GiftDisplay } from './render';
 import { MutationQueue, addGift, removeLine, swapGift, type CartRoutes } from './mutate';
 import { reconcile, removalMessage, selectedVariant, type ClaimedLine } from './claim';
+import { lineInScope, canRenderOffer, type ResolvedScope } from './scope';
 
 interface OfferWithExtras extends Offer {
-  scope?: { kind: 'ENTIRE_CART' | 'COLLECTIONS' | 'PRODUCTS'; ids?: string[] };
+  scope?: ResolvedScope;
   placement?: { drawer?: boolean; cartPage?: boolean };
   design?: RenderOffer['design'];
   copy?: RenderOffer['copy'];
@@ -47,27 +48,6 @@ declare global {
 const GIFT_OFFER_PROP = '_cartbloom_offer';
 const GIFT_TIER_PROP = '_cartbloom_tier';
 
-/**
- * Whether a line counts toward an offer's threshold.
- *
- * The core is scope-agnostic on purpose: the discount function resolves this
- * from a live `inCollections` query and the widget has no equivalent. Where the
- * widget cannot be certain it **under-counts** — an under-promising bar is a
- * cosmetic defect, an over-promising one charges a customer at checkout for
- * something the bar said was free.
- *
- * `COLLECTIONS` is therefore out of scope until Task 33 embeds a resolved
- * product-ID list at publish time.
- */
-function lineInScope(offer: OfferWithExtras, line: AjaxCartLine): boolean {
-  const scope = offer.scope;
-  if (scope === undefined || scope.kind === 'ENTIRE_CART') return true;
-  if (scope.kind === 'PRODUCTS') {
-    return (scope.ids ?? []).some((id) => id.endsWith(`/${line.product_id}`));
-  }
-  return false;
-}
-
 export function normaliseCart(lines: AjaxCartLine[], offers: OfferWithExtras[]): Cart {
   const normalised: CartLine[] = lines.map((line) => {
     const props = line.properties ?? {};
@@ -76,7 +56,7 @@ export function normaliseCart(lines: AjaxCartLine[], offers: OfferWithExtras[]):
       quantity: line.quantity,
       unitPrice: line.original_price,
       variantId: String(line.variant_id),
-      inScope: offers.filter((o) => lineInScope(o, line)).map((o) => o.id),
+      inScope: offers.filter((o) => lineInScope(o.scope, line.product_id)).map((o) => o.id),
       giftOfferId: props[GIFT_OFFER_PROP],
       giftTierId: props[GIFT_TIER_PROP],
     };
@@ -120,6 +100,10 @@ function boot(): void {
     const html = config.offers
       .map((offer, i) => {
         if (offer.placement?.drawer === false || offer.tiers.length === 0) return '';
+        // An unresolvable scope means the widget cannot compute progress. Hide
+        // the bar rather than show a number that may be wrong -- checkout is
+        // unaffected either way.
+        if (!canRenderOffer(offer.scope)) return '';
 
         const ent = entitlements[i];
         let markup = renderOffer({
