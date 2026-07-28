@@ -49,6 +49,25 @@ declare global {
 const GIFT_OFFER_PROP = '_cartbloom_offer';
 const GIFT_TIER_PROP = '_cartbloom_tier';
 
+const VARIANT_GID_PREFIX = 'gid://shopify/ProductVariant/';
+
+/**
+ * Put cart-line variants into the same ID space as the config.
+ *
+ * `/cart.js` reports `variant_id` as a bare number; the config — and the
+ * discount function's input — use GIDs. Comparing the two directly means every
+ * genuine claim looks forged, and reconciliation removes the gift it just
+ * added, reporting "that item is not available as a gift".
+ *
+ * Normalising here rather than loosening the comparison in the shared core
+ * keeps the core's exact-match semantics identical in both hosts, which is the
+ * property the golden vectors exist to protect.
+ */
+function toVariantGid(variantId: number | string): string {
+  const value = String(variantId);
+  return value.startsWith(VARIANT_GID_PREFIX) ? value : VARIANT_GID_PREFIX + value;
+}
+
 export function normaliseCart(lines: AjaxCartLine[], offers: OfferWithExtras[]): Cart {
   const normalised: CartLine[] = lines.map((line) => {
     const props = line.properties ?? {};
@@ -56,7 +75,7 @@ export function normaliseCart(lines: AjaxCartLine[], offers: OfferWithExtras[]):
       id: line.key,
       quantity: line.quantity,
       unitPrice: line.original_price,
-      variantId: String(line.variant_id),
+      variantId: toVariantGid(line.variant_id),
       inScope: offers.filter((o) => lineInScope(o.scope, line.product_id)).map((o) => o.id),
       giftOfferId: props[GIFT_OFFER_PROP],
       giftTierId: props[GIFT_TIER_PROP],
@@ -75,7 +94,7 @@ function claimedLines(cart: AjaxCart): ClaimedLine[] {
     .filter((line) => (line.properties ?? {})[GIFT_OFFER_PROP] !== undefined)
     .map((line) => ({
       key: line.key,
-      variantId: String(line.variant_id),
+      variantId: toVariantGid(line.variant_id),
       offerId: (line.properties ?? {})[GIFT_OFFER_PROP],
       tierId: (line.properties ?? {})[GIFT_TIER_PROP],
     }));
