@@ -49,7 +49,25 @@ const DRAWER_SELECTORS = [
 ];
 
 /**
- * Where inside the drawer the bar belongs.
+ * The panel that actually slides, inside the drawer element.
+ *
+ * `<cart-drawer>` is typically an overlay container covering the viewport, with
+ * the visible panel nested inside it. Mounting into the outer element puts the
+ * bar behind the panel, where it flashes during the open/close transition and
+ * is otherwise invisible — which is exactly what happened on the first real
+ * theme this ran against.
+ */
+const PANEL_SELECTORS = [
+  '.drawer__inner',
+  '.cart-drawer__inner',
+  '.drawer__contents',
+  '.cart-drawer__contents',
+  '[data-drawer-inner]',
+  '.mini-cart__inner',
+];
+
+/**
+ * Where inside the panel the bar belongs.
  *
  * Above the line items, below the header: a progress bar under a long item list
  * is below the fold on mobile, which is where most carts are viewed.
@@ -59,6 +77,19 @@ const INSERTION_HINTS = [
   '.cart-drawer__header',
   '[data-cart-drawer-header]',
   'header',
+];
+
+/**
+ * Containers that hold the line items. Used as a last resort: inserting before
+ * the item list is always inside the panel, even on a theme whose class names
+ * we do not recognise.
+ */
+const ITEMS_SELECTORS = [
+  '.drawer__contents',
+  '.cart-drawer__items',
+  '.cart-items',
+  'cart-items',
+  'form[action*="/cart"]',
 ];
 
 function firstMatch(root: ParentNode, selectors: string[]): HTMLElement | null {
@@ -100,10 +131,30 @@ export function findDrawerMount(root: ParentNode = document): MountResult {
 
   const isStandard =
     drawer.tagName === 'CART-DRAWER-COMPONENT' || drawer.tagName === 'CART-DRAWER';
-  const header = firstMatch(drawer, INSERTION_HINTS);
+
+  // Descend into the sliding panel before choosing a position. Mounting into
+  // the outer overlay puts the bar behind the panel.
+  const panel = firstMatch(drawer, PANEL_SELECTORS) ?? drawer;
+
+  const header = firstMatch(panel, INSERTION_HINTS);
+  if (header !== null) {
+    return { host: ensureHost(header.parentElement ?? panel, header), reason: isStandard ? 'standard' : 'theme-selector' };
+  }
+
+  // No recognisable header. Sit directly above the line items, which is still
+  // inside the panel even on a theme whose class names we do not know.
+  const items = firstMatch(panel, ITEMS_SELECTORS);
+  if (items !== null && items.parentElement !== null) {
+    const host = items.parentElement.querySelector<HTMLElement>(':scope > [data-cartbloom-host]');
+    if (host !== null) return { host, reason: isStandard ? 'standard' : 'theme-selector' };
+    const created = document.createElement('div');
+    created.setAttribute('data-cartbloom-host', '');
+    items.insertAdjacentElement('beforebegin', created);
+    return { host: created, reason: isStandard ? 'standard' : 'theme-selector' };
+  }
 
   return {
-    host: ensureHost(drawer, header),
+    host: ensureHost(panel, null),
     reason: isStandard ? 'standard' : 'theme-selector',
   };
 }

@@ -128,3 +128,57 @@ describe('observeForMount', () => {
     expect(onMounted).toHaveBeenCalledTimes(1);
   });
 });
+
+/**
+ * Structures taken from the real themes this has been run against, added after
+ * each one revealed a placement the fixtures did not cover.
+ */
+describe('findDrawerMount — real theme structures', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('mounts inside the sliding panel, not the overlay container', () => {
+    // cart-drawer is the viewport-covering overlay; .drawer__inner slides.
+    // Mounting into the outer element put the bar behind the panel, where it
+    // only flashed during the open/close transition.
+    render(`
+      <cart-drawer class="drawer animate">
+        <div class="drawer__overlay"></div>
+        <div class="drawer__inner">
+          <div class="drawer__header"><h2>Your cart</h2></div>
+          <div class="drawer__contents"></div>
+        </div>
+      </cart-drawer>`);
+
+    const host = findDrawerMount().host!;
+    expect(host.closest('.drawer__inner')).not.toBeNull();
+    expect(host.closest('.drawer__overlay')).toBeNull();
+    expect(host.parentElement).not.toBe(document.querySelector('cart-drawer'));
+  });
+
+  it('sits above the line items when no header is recognisable', () => {
+    render(`
+      <cart-drawer>
+        <div class="drawer__inner">
+          <cart-items></cart-items>
+        </div>
+      </cart-drawer>`);
+
+    const host = findDrawerMount().host!;
+    expect(host.nextElementSibling?.tagName).toBe('CART-ITEMS');
+    expect(host.closest('.drawer__inner')).not.toBeNull();
+  });
+
+  it('stays idempotent through the panel path', () => {
+    render(`
+      <cart-drawer>
+        <div class="drawer__inner">
+          <div class="drawer__header"></div>
+        </div>
+      </cart-drawer>`);
+
+    expect(findDrawerMount().host).toBe(findDrawerMount().host);
+    expect(document.querySelectorAll('[data-cartbloom-host]')).toHaveLength(1);
+  });
+});

@@ -123,13 +123,9 @@ function boot(): void {
         if (!canRenderOffer(offer.scope)) return '';
 
         const ent = entitlements[i];
-        let markup = renderOffer({
-          offer: offer as RenderOffer,
-          entitlements: ent,
-          moneyFormat: config.moneyFormat,
-        });
 
-        // A chooser per tier the shopper must decide on.
+        // A chooser per tier the shopper must decide on, composed into the
+        // render rather than spliced in afterwards.
         const choosers = ent.gifts
           .filter((g) => g.requiresChoice)
           .map((g) =>
@@ -137,7 +133,12 @@ function boot(): void {
           )
           .join('');
 
-        if (choosers !== '') markup = markup.replace('</div>', `${choosers}</div>`);
+        const markup = renderOffer({
+          offer: offer as RenderOffer,
+          entitlements: ent,
+          moneyFormat: config.moneyFormat,
+          extra: choosers,
+        });
 
         const tokens = tokenStyle(offer.design?.tokens);
         return tokens === ''

@@ -23,6 +23,15 @@ export interface RenderInput {
   offer: RenderOffer;
   entitlements: OfferEntitlements;
   moneyFormat?: string;
+  /**
+   * Markup appended inside `.cb`, after the tiers — the choosers.
+   *
+   * Passed in rather than spliced on by the caller. Splicing with
+   * `replace('</div>', …)` matched the *first* closing tag, which closes
+   * `.cb__track`, so the chooser ended up nested inside a 14px-tall bar with
+   * `overflow: hidden`. Composing here makes that impossible.
+   */
+  extra?: string;
 }
 
 /** Minor units to a display string, using the shop's own money format. */
@@ -147,6 +156,7 @@ export function renderOffer(input: RenderInput): string {
     `<span class="cb__fill"></span>` +
     `</div>` +
     `<ol class="cb__tiers">${nodes}</ol>` +
+    (input.extra ?? '') +
     `</div>`
   );
 }
