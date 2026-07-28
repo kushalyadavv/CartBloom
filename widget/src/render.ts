@@ -173,7 +173,7 @@ export function renderOffer(input: RenderInput): string {
     ` aria-valuenow="${percent}" aria-label="Rewards progress">` +
     `<span class="cb__fill"></span>` +
     `</div>` +
-    `<ol class="cb__tiers">${nodes}</ol>` +
+    `<ol class="cb__tiers" style="--cb-tier-count:${tiers.length}">${nodes}</ol>` +
     (input.extra ?? '') +
     `</div>`
   );

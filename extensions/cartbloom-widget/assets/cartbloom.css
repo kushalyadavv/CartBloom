@@ -107,7 +107,7 @@
 .cb__tiers {
   position: relative;
   display: block;
-  height: 2.6em;
+  height: 3.4em;
   margin: 8px 0 0;
   padding: 0;
   list-style: none;
@@ -122,10 +122,22 @@
   align-items: center;
   gap: 2px;
   font-size: 0.72em;
-  line-height: 1.4;
+  line-height: 1.35;
   color: var(--cb-locked-color);
   text-align: center;
-  white-space: nowrap;
+
+  /*
+   * Markers sit at their threshold, so an uneven ladder puts them close
+   * together — $50 and $100 land at 25% and 50% of a $200 top tier. Unbounded
+   * labels then overlap and render as one run-on string.
+   *
+   * Each label gets at most its fair share of the width and wraps inside it.
+   * Wrapping is the right failure: a two-line caption is readable, two
+   * captions printed over each other are not.
+   */
+  max-width: calc((100% / var(--cb-tier-count, 3)) - 6px);
+  hyphens: auto;
+  overflow-wrap: anywhere;
 }
 
 /* The first and last markers would otherwise hang off the ends. */
@@ -147,7 +159,14 @@
 }
 
 .cb-tier__caption {
+  font-size: 0.92em;
   opacity: 0.8;
+}
+
+/* Past four tiers there is no room for captions at drawer widths; the
+   threshold alone still carries the meaning. */
+.cb__tiers:has(.cb-tier:nth-child(5)) .cb-tier__caption {
+  display: none;
 }
 
 .cb-tier__dot {
@@ -168,7 +187,7 @@
 }
 
 .cb[data-layout='milestone'] .cb__tiers {
-  height: 3.4em;
+  height: 4.2em;
   margin: -13px 6% 0;
 }
 
