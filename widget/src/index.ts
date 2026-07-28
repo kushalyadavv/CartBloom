@@ -164,12 +164,19 @@ function boot(): void {
 
         // A reward card per tier the shopper must decide on. The picker itself
         // is a modal, opened from the card.
-        const choosers = ent.gifts
+        const cards = ent.gifts
           .filter((g) => g.requiresChoice)
           .map((g) =>
             renderRewardCard(g, selectedVariant(claimed, offer.id, g.tierId), offer.giftDisplays)
-          )
-          .join('');
+          );
+
+        // Two or more rewards become a snap carousel. Stacked vertically in a
+        // drawer, the second card falls below the fold and a shopper never
+        // learns it exists; a peeking edge is what says "there is more".
+        const choosers =
+          cards.length > 1
+            ? `<div class="cb-rewards" role="group" aria-label="Available rewards" tabindex="0">${cards.join('')}</div>`
+            : cards.join('');
 
         const markup = renderOffer({
           offer: offer as RenderOffer,

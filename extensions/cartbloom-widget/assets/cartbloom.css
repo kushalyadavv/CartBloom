@@ -624,3 +624,48 @@
     transition: none;
   }
 }
+
+/* ============================================================  carousel === */
+
+/*
+ * Two or more rewards scroll horizontally with the next one peeking.
+ *
+ * Stacked vertically in a drawer the second card sits below the fold, and a
+ * shopper never learns it is there. The peek is the whole mechanism — it is
+ * what turns "one reward" into "rewards, plural" without a label saying so.
+ */
+.cb-rewards {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 0;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hidden, not disabled — the region still scrolls by wheel, drag and keyboard. */
+.cb-rewards::-webkit-scrollbar {
+  display: none;
+}
+
+.cb-rewards:focus-visible {
+  outline: 2px solid var(--cb-unlocked-color, #111);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+.cb-rewards > .cb-reward {
+  flex: 0 0 87%;
+  margin-top: 0;
+  scroll-snap-align: start;
+}
+
+/* On a wide cart page there is room for two abreast, and the third peeks. */
+@container (min-width: 560px) {
+  .cb-rewards > .cb-reward {
+    flex-basis: 46%;
+  }
+}
