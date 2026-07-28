@@ -1,0 +1,37 @@
+{% comment %}
+  CartBloom on the cart page.
+
+  A real app block (target: section), unlike the drawer embed. The merchant
+  drags this into their cart template and positions it exactly, so there is no
+  selector guessing, no MutationObserver, and no overlay to accidentally mount
+  behind — all the things that make the drawer hard.
+
+  The host element is rendered here rather than found. The widget script, loaded
+  by the app embed, paints into every [data-cartbloom-host] it finds, so this
+  block only has to declare where.
+
+  The embed must be enabled for this to do anything: it carries the config and
+  the script. That is stated in the block's presence check below rather than
+  failing silently.
+{% endcomment %}
+
+{%- assign cfg = shop.metafields["$app"]["cartbloom-widget-config"].value -%}
+
+{% if cfg %}
+  <div
+    data-cartbloom-host
+    data-cartbloom-mount="app-block"
+    data-cartbloom-placement="cart-page"
+    {{ block.shopify_attributes }}
+  ></div>
+{% else %}
+  <!-- CartBloom: cart-page block placed, but no configuration published yet -->
+{% endif %}
+
+{% schema %}
+{
+  "name": "CartBloom progress bar",
+  "target": "section",
+  "settings": []
+}
+{% endschema %}

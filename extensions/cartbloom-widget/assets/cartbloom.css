@@ -88,15 +88,27 @@
 
 /* ----------------------------------------------------------------- tiers --- */
 
+/*
+ * Tiers are positioned by threshold, not spread evenly.
+ *
+ * `--cb-at` is each tier's threshold as a percentage of the top tier, so a
+ * ladder of $50/$60/$200 puts two markers close together near the start rather
+ * than at thirds. Even spacing happens to look right for $50/$100/$150 and is
+ * wrong for everything else -- the markers would disagree with the fill.
+ */
 .cb__tiers {
-  display: flex;
-  justify-content: space-between;
+  position: relative;
+  display: block;
+  height: 2.6em;
   margin: 8px 0 0;
   padding: 0;
   list-style: none;
 }
 
 .cb-tier {
+  position: absolute;
+  left: var(--cb-at, 0%);
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -105,6 +117,16 @@
   line-height: 1.4;
   color: var(--cb-locked-color);
   text-align: center;
+  white-space: nowrap;
+}
+
+/* The first and last markers would otherwise hang off the ends. */
+.cb-tier:first-child {
+  transform: translateX(-25%);
+}
+
+.cb-tier:last-child {
+  transform: translateX(-75%);
 }
 
 .cb-tier.is-unlocked {
@@ -138,8 +160,8 @@
 }
 
 .cb[data-layout='milestone'] .cb__tiers {
-  position: relative;
-  margin-top: -13px;
+  height: 3.4em;
+  margin: -13px 6% 0;
 }
 
 .cb[data-layout='milestone'] .cb-tier__dot {
@@ -276,6 +298,8 @@
 
 .cb-opt__btn {
   display: flex;
+  max-width: 100%;
+  min-width: 0;
   align-items: center;
   gap: 7px;
   padding: 6px 10px 6px 6px;
@@ -343,4 +367,32 @@
   clip-path: inset(50%);
   overflow: hidden;
   white-space: nowrap;
+}
+
+/* Long labels (variant ids before publish-time resolution, or verbose product
+   names) must not force each chip onto its own row. */
+.cb-opt {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.cb-opt__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ cart page --- */
+
+/*
+ * The cart page gets a real app block the merchant drags into place, so there
+ * is no mounting heuristic and no overlay to get behind. More room than a
+ * drawer, so the bar can breathe.
+ */
+[data-cartbloom-placement='cart-page'] .cb {
+  margin-bottom: 20px;
+}
+
+[data-cartbloom-placement='cart-page'] .cb__message {
+  font-size: 1.05em;
 }

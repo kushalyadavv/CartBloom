@@ -108,27 +108,46 @@ function boot(): void {
   const cartUrl = routes?.cart ?? '/cart.js';
   const queue = new MutationQueue();
 
-  let host: HTMLElement | null = null;
+  /**
+   * Every place the widget paints.
+   *
+   * The drawer host is found by heuristic; the cart-page host is rendered by an
+   * app block the merchant positioned. Both are painted with the same markup,
+   * so a shopper sees consistent state wherever they look.
+   */
+  const hosts = new Map<HTMLElement, { live: HTMLElement; content: HTMLElement }>();
   let notice = '';
   let previous: OfferEntitlements[] | null = null;
 
   /**
-   * A live region that survives repaints.
+   * Give a host its live region and content container.
    *
-   * It must live outside the markup `paint` replaces: a live region that is
-   * removed and recreated is not announced, because assistive technology only
+   * The live region must sit outside the markup `paint` replaces: one that is
+   * removed and recreated is never announced, because assistive technology only
    * reports changes to regions it was already observing.
    */
-  const live = document.createElement('p');
-  live.className = 'cb__live';
-  live.setAttribute('role', 'status');
-  live.setAttribute('aria-live', 'polite');
+  const attachHost = (host: HTMLElement): void => {
+    if (hosts.has(host)) return;
 
-  /** The markup `paint` owns, so the live region above is never destroyed. */
-  const content = document.createElement('div');
+    const live = document.createElement('p');
+    live.className = 'cb__live';
+    live.setAttribute('role', 'status');
+    live.setAttribute('aria-live', 'polite');
+
+    const content = document.createElement('div');
+    host.replaceChildren(live, content);
+    hosts.set(host, { live, content });
+  };
+
+  /** Hosts rendered by an app block, which exist before any mounting runs. */
+  const adoptDeclaredHosts = (): void => {
+    for (const el of document.querySelectorAll<HTMLElement>('[data-cartbloom-host]')) {
+      attachHost(el);
+    }
+  };
 
   const paint = (cart: AjaxCart): void => {
-    if (host === null) return;
+    if (hosts.size === 0) return;
 
     const entitlements = evaluate(config, cart);
     const claimed = claimedLines(cart);
@@ -171,25 +190,31 @@ function boot(): void {
     // makes the chooser effectively unusable without a mouse.
     const active = document.activeElement as HTMLElement | null;
     const focusKey =
-      active !== null && content.contains(active) && active.dataset.cbVariant !== undefined
+      active !== null && active.dataset.cbVariant !== undefined
         ? `${active.dataset.cbOffer}|${active.dataset.cbTier}|${active.dataset.cbVariant}`
         : null;
+    const focusedIn = active === null ? null : [...hosts.values()].find((h) => h.content.contains(active));
 
-    content.innerHTML =
-      html + (notice === '' ? '' : `<p class="cb__notice">${notice}</p>`);
+    const markup = html + (notice === '' ? '' : `<p class="cb__notice">${notice}</p>`);
+    const say = announcement({ previous, current: entitlements });
+
+    for (const [, parts] of hosts) {
+      parts.content.innerHTML = markup;
+      // Announce once per host; each has its own region so whichever the
+      // shopper is near will speak.
+      if (say !== null) parts.live.textContent = say;
+    }
     notice = '';
 
-    if (focusKey !== null) {
+    if (focusKey !== null && focusedIn !== undefined && focusedIn !== null) {
       const [offerId, tierId, variantId] = focusKey.split('|');
-      content
+      focusedIn.content
         .querySelector<HTMLElement>(
           `[data-cb-offer="${offerId}"][data-cb-tier="${tierId}"][data-cb-variant="${variantId}"]`
         )
         ?.focus();
     }
 
-    const say = announcement({ previous, current: entitlements });
-    if (say !== null) live.textContent = say;
     previous = entitlements;
   };
 
@@ -226,7 +251,7 @@ function boot(): void {
   document.addEventListener('click', (event) => {
     const button = (event.target as Element | null)?.closest<HTMLElement>('[data-cb-claim]');
     if (button === null || button === undefined) return;
-    if (host === null || !content.contains(button)) return;
+    if (![...hosts.values()].some((h) => h.content.contains(button))) return;
 
     event.preventDefault();
     const offerId = button.dataset.cbOffer!;
@@ -260,10 +285,9 @@ function boot(): void {
   });
 
   const attach = (result: MountResult): void => {
-    host = result.host;
-    if (host === null) return;
-    host.setAttribute('data-cartbloom-mount', result.reason);
-    host.replaceChildren(live, content);
+    if (result.host === null) return;
+    result.host.setAttribute('data-cartbloom-mount', result.reason);
+    attachHost(result.host);
   };
 
   /**
@@ -277,9 +301,18 @@ function boot(): void {
    */
   const refreshAndRepaint = async (): Promise<void> => {
     const replaced = await refreshCartSections().catch(() => false);
-    if (replaced) attach(findDrawerMount());
+    if (replaced) {
+      // The swap destroyed the markup, and our hosts with it.
+      for (const el of [...hosts.keys()]) if (!el.isConnected) hosts.delete(el);
+      adoptDeclaredHosts();
+      attach(findDrawerMount());
+    }
     paint(await fetchCart(cartUrl));
   };
+
+  // App blocks render their host in Liquid, so they exist before mounting runs.
+  adoptDeclaredHosts();
+  if (hosts.size > 0) void fetchCart(cartUrl).then(sync);
 
   observeForMount((result: MountResult) => {
     attach(result);
