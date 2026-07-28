@@ -136,17 +136,34 @@
    * captions printed over each other are not.
    */
   max-width: calc((100% / var(--cb-tier-count, 3)) - 6px);
-  hyphens: auto;
-  overflow-wrap: anywhere;
 }
 
-/* The first and last markers would otherwise hang off the ends. */
+/*
+ * The end markers anchor to the edges rather than centring on their position.
+ *
+ * A percentage nudge is not enough: the last tier sits at left: 100%, so any
+ * centred label still extends past the container and — inside a drawer with a
+ * hard right edge — wraps one character per line down the outside. Anchoring
+ * removes the overhang entirely instead of trying to compensate for it.
+ */
 .cb-tier:first-child {
-  transform: translateX(-25%);
+  left: 0;
+  transform: none;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .cb-tier:last-child {
-  transform: translateX(-75%);
+  left: auto;
+  right: 0;
+  transform: none;
+  align-items: flex-end;
+  text-align: right;
+}
+
+/* A price should never break mid-number. */
+.cb-tier__label {
+  white-space: nowrap;
 }
 
 .cb-tier.is-unlocked {
@@ -157,6 +174,8 @@
 .cb-tier__label {
   font-weight: 700;
 }
+
+
 
 .cb-tier__caption {
   font-size: 0.92em;

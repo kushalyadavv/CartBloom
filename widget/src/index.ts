@@ -328,8 +328,52 @@ function boot(): void {
     }
   });
 
+  /**
+   * Keep Tab inside the dialog.
+   *
+   * `aria-modal="true"` tells assistive technology the rest of the page is
+   * inert; it does not make it so. Without this, Tab walks out of the picker
+   * into the drawer and the page behind, and a keyboard shopper is left
+   * operating a UI they cannot see behind a backdrop.
+   *
+   * Queried on each keypress rather than cached: the tile list re-renders on
+   * every selection, so a cached list would hold detached nodes.
+   */
+  const focusablesIn = (root: HTMLElement): HTMLElement[] =>
+    [...root.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')]
+      .filter((el) => el.offsetParent !== null || el === document.activeElement);
+
   document.addEventListener('keydown', (event) => {
-    if (modal !== null && event.key === 'Escape') closeModal();
+    if (modal === null) return;
+
+    if (event.key === 'Escape') {
+      closeModal();
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+
+    const focusables = focusablesIn(modalLayer);
+    if (focusables.length === 0) return;
+
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement as HTMLElement | null;
+
+    // Focus outside the dialog at all — after a repaint, say — is pulled back.
+    if (active === null || !modalLayer.contains(active)) {
+      event.preventDefault();
+      first.focus();
+      return;
+    }
+
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
   });
 
   // ---- claiming ----------------------------------------------------------
