@@ -25,12 +25,37 @@ if (variantGids.length === 0) {
 
 // Two tiers so both a non-gift reward and the gift arbitration path get
 // exercised: free shipping at $50, then a PICK_ONE gift pool at $100.
+const pool = (variants: string[]) =>
+  variants.map((variantId) => ({
+    variantId,
+    discountType: 'FREE' as const,
+    value: 0,
+    maxQty: 1,
+  }));
+
+/**
+ * Two gift tiers, so the reward carousel has something to carousel.
+ *
+ * A reward card only appears when a tier requires a choice, which means a pool
+ * of two or more. With four or more variants the pools are split so each tier
+ * offers something different; with two or three they are shared, because a
+ * split would leave one variant per tier, no choice required, and no card at
+ * all. Shared pools are not how a merchant would configure this, but they do
+ * exercise the same rendering path.
+ */
+const half = Math.ceil(variantGids.length / 2);
+const canSplit = variantGids.length >= 4;
+const firstPool = canSplit ? variantGids.slice(0, half) : variantGids;
+const secondPool = canSplit ? variantGids.slice(half) : variantGids;
+
 const offers = [
   {
     id: 'test-offer',
     trigger: 'SUBTOTAL' as const,
     claimPolicy: {
       withinTier: 'PICK_ONE' as const,
+      // STACK so both gift tiers grant at once — that is what puts two cards
+      // on screen. Under SINGLE only one tier would ever offer a choice.
       acrossTiers: 'STACK' as const,
     },
     tiers: [
@@ -41,15 +66,16 @@ const offers = [
         giftPool: [],
       },
       {
-        id: 'tier-gift',
+        id: 'tier-gift-1',
         threshold: 10000, // $100.00
         reward: 'GIFT' as const,
-        giftPool: variantGids.map((variantId) => ({
-          variantId,
-          discountType: 'FREE' as const,
-          value: 0,
-          maxQty: 1,
-        })),
+        giftPool: pool(firstPool),
+      },
+      {
+        id: 'tier-gift-2',
+        threshold: 20000, // $200.00
+        reward: 'GIFT' as const,
+        giftPool: pool(secondPool),
       },
     ],
     scope: { kind: 'ENTIRE_CART' as const, ids: [] },
@@ -100,9 +126,19 @@ console.log(
   `widget config:   ${JSON.stringify(widgetConfig).length} bytes — cap 131,072`
 );
 
-console.log('\n=== what to expect at checkout ===');
-console.log('  under $50   : nothing');
-console.log('  $50–$99.99  : free shipping only');
-console.log('  $100+       : free shipping, and exactly ONE of the gift variants free');
-console.log(`                (${variantGids.length} in the pool; adding all of them should still`);
-console.log('                 discount only the highest-priced one)');
+console.log('\n=== what to expect ===');
+console.log('  under $50    : nothing');
+console.log('  $50–$99.99   : free shipping only');
+console.log('  $100–$199.99 : free shipping + ONE reward card');
+console.log('  $200+        : free shipping + TWO reward cards, as a peeking carousel');
+console.log('');
+console.log(
+  canSplit
+    ? `  Pools are split: tier 1 offers ${firstPool.length}, tier 2 offers ${secondPool.length}.`
+    : `  Only ${variantGids.length} variants given, so both tiers share one pool.\n` +
+      '  Splitting would leave a single variant per tier, which requires no choice\n' +
+      '  and renders no card at all. Pass 4+ variants for distinct pools.'
+);
+console.log('');
+console.log('  Tiles show grey placeholders and GID labels until Phase 4 resolves');
+console.log('  giftDisplays. Expected, not a fault.');
