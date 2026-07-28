@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { announcement } from './announce';
-import type { OfferEntitlements } from '../../../app/entitlement';
+import type { OfferEntitlements } from '../../app/entitlement';
 
 const state = (
   unlocked: string[],

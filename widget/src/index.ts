@@ -15,7 +15,7 @@ import {
   type CartLine,
   type Offer,
   type OfferEntitlements,
-} from '../../../app/entitlement';
+} from '../../app/entitlement';
 import { onCartChange, fetchCart, type AjaxCart, type AjaxCartLine } from './cart';
 import { observeForMount, type MountResult } from './mount';
 import { renderOffer, renderChooser, tokenStyle, type RenderOffer, type GiftDisplay } from './render';

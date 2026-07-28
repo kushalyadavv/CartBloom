@@ -10,7 +10,7 @@
  * should do no more than emit semantic markup and set a few custom properties.
  */
 
-import type { OfferEntitlements, Offer, Tier } from '../../../app/entitlement';
+import type { OfferEntitlements, Offer, Tier } from '../../app/entitlement';
 
 export type Layout = 'BAR' | 'MILESTONE';
 

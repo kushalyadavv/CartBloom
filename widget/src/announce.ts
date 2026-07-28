@@ -13,7 +13,7 @@
  * trying to do something else.
  */
 
-import type { OfferEntitlements } from '../../../app/entitlement';
+import type { OfferEntitlements } from '../../app/entitlement';
 
 export interface AnnouncementInput {
   previous: OfferEntitlements[] | null;

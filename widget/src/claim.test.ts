@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { reconcile, removalMessage, selectedVariant, type ClaimedLine } from './claim';
-import type { OfferEntitlements } from '../../../app/entitlement';
+import type { OfferEntitlements } from '../../app/entitlement';
 
 const gift = (v: string) => ({ variantId: v, discountType: 'FREE' as const, value: 0, maxQty: 1 });
 

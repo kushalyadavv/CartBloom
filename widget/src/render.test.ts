@@ -7,7 +7,7 @@ import {
   tokenStyle,
   type RenderOffer,
 } from './render';
-import type { OfferEntitlements } from '../../../app/entitlement';
+import type { OfferEntitlements } from '../../app/entitlement';
 
 const offer: RenderOffer = {
   id: 'o1',

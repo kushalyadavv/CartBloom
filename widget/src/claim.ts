@@ -11,7 +11,7 @@
  * being asked for reads as the app adding items on its own.
  */
 
-import type { OfferEntitlements, GiftEntitlement } from '../../../app/entitlement';
+import type { OfferEntitlements, GiftEntitlement } from '../../app/entitlement';
 import type { GiftClaim } from './mutate';
 
 export interface ClaimedLine {
