@@ -251,3 +251,82 @@
     animation: none;
   }
 }
+
+/* --------------------------------------------------------------- chooser --- */
+
+.cb__chooser {
+  margin-top: 12px;
+}
+
+.cb__chooser-title {
+  margin: 0 0 6px;
+  font-size: 0.82em;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.cb__opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cb-opt__btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px 6px 6px;
+  border: 1.5px solid var(--cb-track);
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8em;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.cb-opt__btn:hover {
+  border-color: var(--cb-unlocked-color);
+}
+
+/* Focus must remain obvious — this is the one thing in the widget a keyboard
+   shopper has to be able to operate. */
+.cb-opt__btn:focus-visible {
+  outline: 2px solid var(--cb-unlocked-color);
+  outline-offset: 2px;
+}
+
+.cb-opt__btn.is-selected {
+  border-color: var(--cb-unlocked-color);
+  border-width: 2px;
+  font-weight: 700;
+}
+
+.cb-opt__img {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+/* Claiming is a network round trip; the widget must not look frozen. */
+.cb[data-busy] .cb-opt__btn {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- notice --- */
+
+.cb__notice {
+  margin: 10px 0 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(128, 128, 128, 0.12);
+  font-size: 0.78em;
+  line-height: 1.4;
+}

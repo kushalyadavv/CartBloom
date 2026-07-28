@@ -152,6 +152,69 @@ export function renderOffer(input: RenderInput): string {
 }
 
 /**
+ * Display data for a gift, embedded at publish time.
+ *
+ * Resolved by the admin app rather than fetched here: a per-variant request on
+ * every cart render would add latency to the drawer for data that changes
+ * rarely. The trade is that a renamed or re-priced product reads stale until
+ * the merchant republishes.
+ */
+export interface GiftDisplay {
+  variantId: string;
+  title?: string;
+  image?: string;
+  price?: number;
+}
+
+/**
+ * The gift chooser.
+ *
+ * Real `<button>` elements, not clickable divs — this is the one interactive
+ * part of the widget, and keyboard shoppers have to be able to claim a gift.
+ *
+ * `display` is optional: when the config predates publish-time resolution, the
+ * variant id is shown rather than nothing. An unlabelled chooser is poor, an
+ * absent one loses the shopper their gift.
+ */
+export function renderChooser(
+  entitlement: { offerId: string; tierId: string; candidates: Array<{ variantId: string }> },
+  selected: string | undefined,
+  displays: GiftDisplay[] = [],
+  title = 'Pick your gift'
+): string {
+  const options = entitlement.candidates
+    .map((candidate) => {
+      const display = displays.find((d) => d.variantId === candidate.variantId);
+      const label = display?.title ?? candidate.variantId;
+      const isSelected = selected === candidate.variantId;
+      const image =
+        display?.image === undefined
+          ? ''
+          : `<img class="cb-opt__img" src="${escapeHtml(display.image)}" alt="" loading="lazy" width="44" height="44">`;
+
+      return (
+        `<li class="cb-opt">` +
+        `<button type="button" class="cb-opt__btn${isSelected ? ' is-selected' : ''}"` +
+        ` data-cb-claim data-cb-offer="${escapeHtml(entitlement.offerId)}"` +
+        ` data-cb-tier="${escapeHtml(entitlement.tierId)}"` +
+        ` data-cb-variant="${escapeHtml(candidate.variantId)}"` +
+        ` aria-pressed="${isSelected}">` +
+        image +
+        `<span class="cb-opt__title">${escapeHtml(label)}</span>` +
+        `</button></li>`
+      );
+    })
+    .join('');
+
+  return (
+    `<div class="cb__chooser">` +
+    `<p class="cb__chooser-title">${escapeHtml(title)}</p>` +
+    `<ul class="cb__opts">${options}</ul>` +
+    `</div>`
+  );
+}
+
+/**
  * Design tokens as inline custom properties.
  *
  * Merchant overrides land here; presets live in the stylesheet. Keys are

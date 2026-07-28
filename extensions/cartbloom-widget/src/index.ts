@@ -1,31 +1,41 @@
 /**
  * Widget entry point.
  *
- * Responsibilities, in order: read the config Liquid inlined, find somewhere to
- * mount, subscribe to cart changes, and recompute entitlements on each one.
- * Rendering is Task 31; this currently writes a data attribute so the wiring is
- * observable without a UI.
+ * Reads the config Liquid inlined, finds somewhere to mount, subscribes to cart
+ * changes, recomputes entitlements, reconciles gift lines, and paints.
  *
  * Nothing here calls our infrastructure. Config arrives inlined, cart state
  * comes from Shopify. That is what keeps hosting cost independent of a
  * merchant's traffic (spec §4).
  */
 
-import { resolveOffer, type Cart, type CartLine, type Offer, type OfferEntitlements } from '../../../app/entitlement';
+import {
+  resolveOffer,
+  type Cart,
+  type CartLine,
+  type Offer,
+  type OfferEntitlements,
+} from '../../../app/entitlement';
 import { onCartChange, fetchCart, type AjaxCart, type AjaxCartLine } from './cart';
 import { observeForMount, type MountResult } from './mount';
-import { renderOffer, tokenStyle, type RenderOffer } from './render';
+import { renderOffer, renderChooser, tokenStyle, type RenderOffer, type GiftDisplay } from './render';
+import { MutationQueue, addGift, removeLine, swapGift, type CartRoutes } from './mutate';
+import { reconcile, removalMessage, selectedVariant, type ClaimedLine } from './claim';
 
-interface OfferWithScope extends Offer {
+interface OfferWithExtras extends Offer {
   scope?: { kind: 'ENTIRE_CART' | 'COLLECTIONS' | 'PRODUCTS'; ids?: string[] };
   placement?: { drawer?: boolean; cartPage?: boolean };
+  design?: RenderOffer['design'];
+  copy?: RenderOffer['copy'];
+  /** Titles, images and prices resolved at publish time. See render.ts. */
+  giftDisplays?: GiftDisplay[];
 }
 
 interface WidgetConfig {
   v: number;
-  offers: OfferWithScope[];
+  offers: OfferWithExtras[];
   moneyFormat?: string;
-  routes?: { cartAdd: string; cartChange: string; cart: string };
+  routes?: CartRoutes;
 }
 
 declare global {
@@ -42,14 +52,14 @@ const GIFT_TIER_PROP = '_cartbloom_tier';
  *
  * The core is scope-agnostic on purpose: the discount function resolves this
  * from a live `inCollections` query and the widget has no equivalent. Where the
- * widget cannot be certain it must **under-count** — an under-promising bar is
- * a cosmetic defect, an over-promising one charges a customer at checkout for
+ * widget cannot be certain it **under-counts** — an under-promising bar is a
+ * cosmetic defect, an over-promising one charges a customer at checkout for
  * something the bar said was free.
  *
- * `COLLECTIONS` is therefore treated as out of scope until Task 33 embeds a
- * resolved product-ID list at publish time.
+ * `COLLECTIONS` is therefore out of scope until Task 33 embeds a resolved
+ * product-ID list at publish time.
  */
-function lineInScope(offer: OfferWithScope, line: AjaxCartLine): boolean {
+function lineInScope(offer: OfferWithExtras, line: AjaxCartLine): boolean {
   const scope = offer.scope;
   if (scope === undefined || scope.kind === 'ENTIRE_CART') return true;
   if (scope.kind === 'PRODUCTS') {
@@ -58,7 +68,7 @@ function lineInScope(offer: OfferWithScope, line: AjaxCartLine): boolean {
   return false;
 }
 
-export function normaliseCart(lines: AjaxCartLine[], offers: OfferWithScope[]): Cart {
+export function normaliseCart(lines: AjaxCartLine[], offers: OfferWithExtras[]): Cart {
   const normalised: CartLine[] = lines.map((line) => {
     const props = line.properties ?? {};
     return {
@@ -67,8 +77,6 @@ export function normaliseCart(lines: AjaxCartLine[], offers: OfferWithScope[]): 
       unitPrice: line.original_price,
       variantId: String(line.variant_id),
       inScope: offers.filter((o) => lineInScope(o, line)).map((o) => o.id),
-      // Claims only. The function re-derives entitlement; these are hints for
-      // rendering, never evidence.
       giftOfferId: props[GIFT_OFFER_PROP],
       giftTierId: props[GIFT_TIER_PROP],
     };
@@ -77,47 +85,144 @@ export function normaliseCart(lines: AjaxCartLine[], offers: OfferWithScope[]): 
 }
 
 export function evaluate(config: WidgetConfig, cart: AjaxCart): OfferEntitlements[] {
-  const normalised = normaliseCart(cart.items, config.offers);
-  return config.offers.map((offer) => resolveOffer(normalised, offer));
+  return config.offers.map((offer) => resolveOffer(normaliseCart(cart.items, config.offers), offer));
+}
+
+/** Gift lines currently in the cart, in the shape reconciliation expects. */
+function claimedLines(cart: AjaxCart): ClaimedLine[] {
+  return cart.items
+    .filter((line) => (line.properties ?? {})[GIFT_OFFER_PROP] !== undefined)
+    .map((line) => ({
+      key: line.key,
+      variantId: String(line.variant_id),
+      offerId: (line.properties ?? {})[GIFT_OFFER_PROP],
+      tierId: (line.properties ?? {})[GIFT_TIER_PROP],
+    }));
 }
 
 function boot(): void {
   const config = window.__CARTBLOOM__;
   if (config === undefined || config.offers.length === 0) return;
 
-  const cartUrl = config.routes?.cart ?? '/cart.js';
+  const routes = config.routes;
+  const cartUrl = routes?.cart ?? '/cart.js';
+  const queue = new MutationQueue();
+
   let host: HTMLElement | null = null;
+  let notice = '';
 
   const paint = (cart: AjaxCart): void => {
     if (host === null) return;
-    const entitlements = evaluate(config, cart);
 
-    // An offer with no tiers, or one whose placement excludes the drawer,
-    // renders nothing rather than an empty bar.
+    const entitlements = evaluate(config, cart);
+    const claimed = claimedLines(cart);
+
     const html = config.offers
       .map((offer, i) => {
-        if (offer.placement?.drawer === false) return '';
-        if (offer.tiers.length === 0) return '';
-        const inner = renderOffer({
+        if (offer.placement?.drawer === false || offer.tiers.length === 0) return '';
+
+        const ent = entitlements[i];
+        let markup = renderOffer({
           offer: offer as RenderOffer,
-          entitlements: entitlements[i],
+          entitlements: ent,
           moneyFormat: config.moneyFormat,
         });
-        const tokens = tokenStyle((offer as RenderOffer).design?.tokens);
-        return tokens === '' ? inner : inner.replace('<div class="cb"', `<div class="cb" data-tokens style="${tokens}"`);
+
+        // A chooser per tier the shopper must decide on.
+        const choosers = ent.gifts
+          .filter((g) => g.requiresChoice)
+          .map((g) =>
+            renderChooser(g, selectedVariant(claimed, offer.id, g.tierId), offer.giftDisplays)
+          )
+          .join('');
+
+        if (choosers !== '') markup = markup.replace('</div>', `${choosers}</div>`);
+
+        const tokens = tokenStyle(offer.design?.tokens);
+        return tokens === ''
+          ? markup
+          : markup.replace('<div class="cb"', `<div class="cb" style="${tokens}"`);
       })
       .join('');
 
-    host.innerHTML = html;
+    host.innerHTML =
+      html + (notice === '' ? '' : `<p class="cb__notice" role="status">${notice}</p>`);
+    notice = '';
   };
+
+  /**
+   * Bring the cart in line with what the shopper is entitled to.
+   *
+   * Every write goes through the queue, so a burst of cart activity cannot
+   * interleave adds and removes into a state nobody asked for.
+   */
+  const sync = (cart: AjaxCart): void => {
+    const { add, remove } = reconcile(evaluate(config, cart), claimedLines(cart));
+    paint(cart);
+
+    if (add.length === 0 && remove.length === 0) return;
+
+    // Explain the first removal. Listing every one turns a small correction
+    // into a wall of text; silence reads as a bug.
+    if (remove.length > 0) notice = removalMessage(remove[0].reason);
+
+    void queue
+      .run(async () => {
+        for (const r of remove) await removeLine(r.key, routes);
+        for (const a of add) await addGift(a, routes);
+        return fetchCart(cartUrl);
+      })
+      .then(paint, () => {
+        notice = 'We could not update your gift. Please try again.';
+        void fetchCart(cartUrl).then(paint);
+      });
+  };
+
+  // Claiming, swapping, and re-claiming, by delegation so re-rendering the
+  // host never leaves a dangling listener.
+  document.addEventListener('click', (event) => {
+    const button = (event.target as Element | null)?.closest<HTMLElement>('[data-cb-claim]');
+    if (button === null || button === undefined) return;
+    if (host === null || !host.contains(button)) return;
+
+    event.preventDefault();
+    const offerId = button.dataset.cbOffer!;
+    const tierId = button.dataset.cbTier!;
+    const variantId = button.dataset.cbVariant!;
+
+    button.closest<HTMLElement>('.cb')?.setAttribute('data-busy', '');
+
+    void queue
+      .run(async () => {
+        const cart = await fetchCart(cartUrl);
+        const existing = claimedLines(cart).find(
+          (l) => l.offerId === offerId && l.tierId === tierId
+        );
+
+        // Clicking the selected option again is a deselect, not a no-op —
+        // a shopper who changes their mind should be able to take nothing.
+        if (existing?.variantId === variantId) {
+          await removeLine(existing.key, routes);
+        } else if (existing !== undefined) {
+          await swapGift(existing.key, { variantId, offerId, tierId }, routes);
+        } else {
+          await addGift({ variantId, offerId, tierId }, routes);
+        }
+        return fetchCart(cartUrl);
+      })
+      .then(paint, () => {
+        notice = 'We could not update your gift. Please try again.';
+        void fetchCart(cartUrl).then(paint);
+      });
+  });
 
   observeForMount((result: MountResult) => {
     host = result.host;
     host?.setAttribute('data-cartbloom-mount', result.reason);
-    void fetchCart(cartUrl).then(paint);
+    void fetchCart(cartUrl).then(sync);
   });
 
-  onCartChange(paint, cartUrl);
+  onCartChange(sync, cartUrl);
 }
 
 if (document.readyState === 'loading') {
