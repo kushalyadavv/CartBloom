@@ -75,24 +75,17 @@ export async function upsertShop(
     .run();
 }
 
-/**
- * Claim the one-time webhook registration for a shop.
+/*
+ * There is deliberately no per-shop webhook registration here.
  *
- * Returns true only for the caller that wins the claim, so concurrent installs
- * cannot register twice. Registration must happen on first token acquisition:
- * the review playbook is explicit that relying on a manual per-shop script
- * means it never runs for real installs.
+ * All five topics — app/uninstalled, app/scopes_update, and the three
+ * compliance topics — are declared in shopify.app.toml, so Shopify subscribes
+ * at the app level when a shop installs. That satisfies the requirement to
+ * register automatically on install more strongly than code could: there is no
+ * first-request race to lose, and no shop that can end up unsubscribed because
+ * a registration call failed. The `webhooks_registered_at` column is left in
+ * the schema for a future topic that genuinely needs per-shop registration.
  */
-export async function claimWebhookRegistration(db: D1Database, shop: string): Promise<boolean> {
-  const result = await db
-    .prepare(
-      `UPDATE shops SET webhooks_registered_at = ?
-       WHERE shop = ? AND webhooks_registered_at IS NULL`
-    )
-    .bind(Date.now(), shop)
-    .run();
-  return (result.meta.changes ?? 0) > 0;
-}
 
 export async function setDiscountNodeId(
   db: D1Database,

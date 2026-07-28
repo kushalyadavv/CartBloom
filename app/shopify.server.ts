@@ -18,6 +18,7 @@ import {
   shopifyApp,
 } from '@shopify/shopify-app-react-router/server';
 
+import { upsertShop } from './db.server';
 import { D1SessionStorage } from './session-storage.server';
 
 export interface Env {
@@ -51,6 +52,27 @@ export function getShopify(env: Env): ShopifyInstance {
     future: {
       // Non-expiring offline tokens are rejected by the Admin API outright.
       expiringOfflineAccessTokens: true,
+    },
+    hooks: {
+      /**
+       * Runs on first token acquisition, which under managed installation is
+       * the only moment we are guaranteed to see a new shop.
+       *
+       * Creating the row here rather than lazily on first write means plan
+       * state and the discount node id have somewhere to live before the
+       * merchant does anything, and an install is visible in the data even if
+       * the merchant never opens the app.
+       *
+       * Deliberately not registering webhooks: all five topics are declared in
+       * shopify.app.toml, so Shopify subscribes at the app level on install.
+       * Registering them again per shop would duplicate deliveries.
+       *
+       * Token exchange re-runs this on every refresh, so it must stay
+       * idempotent — upsertShop is an INSERT ... ON CONFLICT DO UPDATE.
+       */
+      afterAuth: async ({ session }) => {
+        await upsertShop(env.DB, session.shop, session.accessToken ?? '', session.scope ?? null);
+      },
     },
     ...(env.SHOP_CUSTOM_DOMAIN ? { customShopDomains: [env.SHOP_CUSTOM_DOMAIN] } : {}),
   });
