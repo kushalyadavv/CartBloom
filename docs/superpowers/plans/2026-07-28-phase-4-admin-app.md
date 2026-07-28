@@ -77,8 +77,14 @@ CREATE TABLE published_versions (
 - [x] **Step 5:** Deploy and confirm the app loads embedded in the Shopify admin. Commit.
 
 **Deployed:** `https://cartbloom.cartbloom.workers.dev` — 5 ms Worker startup. Routing,
-auth bounce, and HMAC rejection verified by curl. *Embedded load in the admin is
-still unverified — it needs a browser.*
+auth bounce, and HMAC rejection verified by curl. Confirmed loading embedded in the admin on
+cartbloom-test: the Offers page renders inside the iframe, which exercises
+session-token auth and a live D1 read end to end.
+
+One trap on the way: `automatically_update_urls_on_dev = true` had rewritten
+`application_url` to an ephemeral trycloudflare tunnel during an earlier dev
+session and left it there, so the installed app loaded a dead host. Now pinned
+false — the same rewrite during review would repoint a reviewer at a laptop.
 
 **Pulled forward from later tasks**, because leaving them undone would have meant
 migrating code that was going to be deleted, or shipping a config pointing at a
