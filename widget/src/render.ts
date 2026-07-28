@@ -104,6 +104,24 @@ function tierLabel(tier: Tier, moneyFormat: string | undefined, trigger: Offer['
     : formatMoney(tier.threshold, moneyFormat);
 }
 
+/**
+ * A glyph per reward type, so the ladder reads at a glance.
+ *
+ * Inline SVG rather than an icon font or sprite: no extra request, no FOUT, and
+ * `currentColor` means the unlocked state costs nothing to style. They are
+ * aria-hidden — the caption beside them already says what they mean.
+ */
+function tierIcon(tier: Tier): string {
+  const path =
+    tier.reward === 'FREE_SHIPPING'
+      ? 'M1 4h9v7H1zm9 2h3l2 2v3h-5zM3.5 13a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm8 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z'
+      : tier.reward === 'GIFT'
+        ? 'M2 7h12v6a1 1 0 01-1 1H3a1 1 0 01-1-1zm-1-3h14v2H1zM7 4V2.5a1.5 1.5 0 10-1.5 1.5zm2 0h1.5A1.5 1.5 0 109 2.5z'
+        : 'M4 12l8-8M5.5 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm5 7a1.5 1.5 0 110-3 1.5 1.5 0 010 3z';
+
+  return `<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="${path}"/></svg>`;
+}
+
 function tierCaption(tier: Tier): string {
   switch (tier.reward) {
     case 'FREE_SHIPPING':
@@ -140,7 +158,7 @@ export function renderOffer(input: RenderInput): string {
       const at = top !== undefined && top.threshold > 0 ? tier.threshold / top.threshold : 1;
       return (
         `<li class="cb-tier${unlocked ? ' is-unlocked' : ''}" style="--cb-at:${(at * 100).toFixed(2)}%">` +
-        `<span class="cb-tier__dot" aria-hidden="true"></span>` +
+        `<span class="cb-tier__dot" aria-hidden="true">${tierIcon(tier)}</span>` +
         `<span class="cb-tier__label">${escapeHtml(tierLabel(tier, moneyFormat, offer.trigger))}</span>` +
         `<span class="cb-tier__caption">${escapeHtml(tierCaption(tier))}</span>` +
         `</li>`
@@ -186,41 +204,112 @@ export interface GiftDisplay {
  * variant id is shown rather than nothing. An unlabelled chooser is poor, an
  * absent one loses the shopper their gift.
  */
-export function renderChooser(
+/** Thumbnail stack shown on the reward card — a hint at what is on offer. */
+function thumbStack(candidates: Array<{ variantId: string }>, displays: GiftDisplay[]): string {
+  const tiles = candidates
+    .slice(0, 3)
+    .map((c) => {
+      const image = displays.find((d) => d.variantId === c.variantId)?.image;
+      return image === undefined
+        ? `<span class="cb-thumb cb-thumb--blank" aria-hidden="true"></span>`
+        : `<img class="cb-thumb" src="${escapeHtml(image)}" alt="" loading="lazy" width="34" height="34">`;
+    })
+    .join('');
+  return `<span class="cb-thumbs" aria-hidden="true">${tiles}</span>`;
+}
+
+/**
+ * The reward row: what is unlocked, and the way in.
+ *
+ * Replaces the inline chip list. Chips worked for three short labels and fall
+ * apart at four products with real names, which is the ordinary case.
+ */
+export function renderRewardCard(
   entitlement: { offerId: string; tierId: string; candidates: Array<{ variantId: string }> },
   selected: string | undefined,
-  displays: GiftDisplay[] = [],
-  title = 'Pick your gift'
+  displays: GiftDisplay[] = []
 ): string {
-  const options = entitlement.candidates
+  const chosen = selected === undefined ? undefined : displays.find((d) => d.variantId === selected);
+  const label = selected === undefined ? 'Select free gift' : 'Change gift';
+
+  return (
+    `<div class="cb-reward${selected === undefined ? '' : ' is-claimed'}">` +
+    `<div class="cb-reward__head">` +
+    `<span class="cb-reward__title">Select your gift</span>` +
+    `<span class="cb-reward__badge">Unlocked</span>` +
+    `</div>` +
+    `<div class="cb-reward__body">` +
+    thumbStack(entitlement.candidates, displays) +
+    `<div class="cb-reward__text">` +
+    `<span class="cb-reward__status">${selected === undefined ? 'Reward unlocked!' : escapeHtml(chosen?.title ?? 'Gift selected')}</span>` +
+    `</div>` +
+    `<button type="button" class="cb-reward__cta"` +
+    ` data-cb-open` +
+    ` data-cb-offer="${escapeHtml(entitlement.offerId)}"` +
+    ` data-cb-tier="${escapeHtml(entitlement.tierId)}">` +
+    `${escapeHtml(label)}</button>` +
+    `</div>` +
+    `</div>`
+  );
+}
+
+/**
+ * The gift picker, as a modal.
+ *
+ * Two-step by design: choosing highlights, and a separate Claim commits. A grid
+ * of images is easy to mis-tap, and an accidental tap that silently mutates the
+ * cart is worse than one extra click. The inline chip version could be
+ * one-click precisely because it was three short labels in a row.
+ *
+ * "Decide later" is a first-class exit. Under PICK_ONE nothing is added until
+ * the shopper acts, so closing without choosing has to be an obvious, named
+ * option rather than only an X in the corner.
+ */
+export function renderModal(
+  entitlement: { offerId: string; tierId: string; candidates: Array<{ variantId: string }> },
+  selected: string | undefined,
+  displays: GiftDisplay[] = []
+): string {
+  const tiles = entitlement.candidates
     .map((candidate) => {
       const display = displays.find((d) => d.variantId === candidate.variantId);
-      const label = display?.title ?? candidate.variantId;
       const isSelected = selected === candidate.variantId;
-      const image =
+      const media =
         display?.image === undefined
-          ? ''
-          : `<img class="cb-opt__img" src="${escapeHtml(display.image)}" alt="" loading="lazy" width="44" height="44">`;
+          ? `<span class="cb-tile__media cb-tile__media--blank" aria-hidden="true"></span>`
+          : `<img class="cb-tile__media" src="${escapeHtml(display.image)}" alt="" loading="lazy">`;
 
       return (
-        `<li class="cb-opt">` +
-        `<button type="button" class="cb-opt__btn${isSelected ? ' is-selected' : ''}"` +
-        ` data-cb-claim data-cb-offer="${escapeHtml(entitlement.offerId)}"` +
-        ` data-cb-tier="${escapeHtml(entitlement.tierId)}"` +
-        ` data-cb-variant="${escapeHtml(candidate.variantId)}"` +
+        `<li>` +
+        `<button type="button" class="cb-tile${isSelected ? ' is-selected' : ''}"` +
+        ` data-cb-pick data-cb-variant="${escapeHtml(candidate.variantId)}"` +
         ` aria-pressed="${isSelected}">` +
-        image +
-        `<span class="cb-opt__title">${escapeHtml(label)}</span>` +
+        media +
+        `<span class="cb-tile__title">${escapeHtml(display?.title ?? candidate.variantId)}</span>` +
+        `<span class="cb-tile__check" aria-hidden="true">&#10003;</span>` +
         `</button></li>`
       );
     })
     .join('');
 
   return (
-    `<div class="cb__chooser">` +
-    `<p class="cb__chooser-title">${escapeHtml(title)}</p>` +
-    `<ul class="cb__opts">${options}</ul>` +
-    `</div>`
+    `<div class="cb-modal" role="dialog" aria-modal="true" aria-label="Select your free gift" data-cb-modal>` +
+    `<div class="cb-modal__backdrop" data-cb-dismiss></div>` +
+    `<div class="cb-modal__panel">` +
+    `<div class="cb-modal__head">` +
+    `<button type="button" class="cb-modal__close" data-cb-dismiss aria-label="Close">&times;</button>` +
+    `<h2 class="cb-modal__title">Select free gift</h2>` +
+    `<span class="cb-modal__count">${entitlement.candidates.length} total</span>` +
+    `</div>` +
+    `<ul class="cb-modal__grid">${tiles}</ul>` +
+    `<div class="cb-modal__foot">` +
+    `<button type="button" class="cb-modal__claim" data-cb-claim` +
+    ` data-cb-offer="${escapeHtml(entitlement.offerId)}"` +
+    ` data-cb-tier="${escapeHtml(entitlement.tierId)}"` +
+    `${selected === undefined ? ' disabled' : ''}>Claim selected gift</button>` +
+    `<button type="button" class="cb-modal__later" data-cb-dismiss>Decide later</button>` +
+    `</div>` +
+    `</div></div>`
   );
 }
 

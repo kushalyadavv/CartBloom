@@ -4,6 +4,8 @@ import {
   progressMessage,
   progressFraction,
   renderOffer,
+  renderRewardCard,
+  renderModal,
   tokenStyle,
   type RenderOffer,
 } from './render';
@@ -126,6 +128,12 @@ describe('renderOffer', () => {
     expect(html).toContain('Pick a gift');
   });
 
+  it('gives each tier an icon for its reward type', () => {
+    const html = renderOffer({ offer, entitlements: entitlements(0, []) });
+    expect(html).toContain('<svg');
+    expect(html).toContain('aria-hidden="true"');
+  });
+
   it('carries the layout and preset for CSS to act on', () => {
     const styled: RenderOffer = { ...offer, design: { layout: 'MILESTONE', preset: 'quiet' } };
     const html = renderOffer({ offer: styled, entitlements: entitlements(0, []) });
@@ -152,5 +160,68 @@ describe('tokenStyle', () => {
 
   it('strips characters that could break out of the style attribute', () => {
     expect(tokenStyle({ fill: 'red;} body{display:none' })).toBe('--cb-fill:red} body{display:none');
+  });
+});
+
+
+/**
+ * The picker is a modal with a two-step claim. A grid of images is easy to
+ * mis-tap, and an accidental tap that silently mutates the cart is worse than
+ * one extra click — which is why choosing and claiming are separate actions.
+ */
+const pool = {
+  offerId: 'o1',
+  tierId: 't2',
+  candidates: [{ variantId: 'v1' }, { variantId: 'v2' }],
+};
+
+describe('renderRewardCard', () => {
+  it('offers a way in rather than the choices themselves', () => {
+    const html = renderRewardCard(pool, undefined, []);
+    expect(html).toContain('data-cb-open');
+    expect(html).toContain('Select free gift');
+  });
+
+  it('changes the call to action once something is chosen', () => {
+    expect(renderRewardCard(pool, 'v1', [])).toContain('Change gift');
+  });
+
+  it('names the chosen gift when display data exists', () => {
+    const html = renderRewardCard(pool, 'v1', [{ variantId: 'v1', title: 'Cotton Tote' }]);
+    expect(html).toContain('Cotton Tote');
+  });
+
+  it('shows neutral discs rather than broken images before publish resolves them', () => {
+    expect(renderRewardCard(pool, undefined, [])).toContain('cb-thumb--blank');
+  });
+});
+
+describe('renderModal', () => {
+  it('cannot be claimed until something is selected', () => {
+    expect(renderModal(pool, undefined, [])).toContain('disabled');
+  });
+
+  it('enables claiming once a tile is selected', () => {
+    const html = renderModal(pool, 'v1', []);
+    expect(html).not.toContain('data-cb-claim data-cb-offer="o1" data-cb-tier="t2" disabled');
+    expect(html).toContain('is-selected');
+  });
+
+  it('always offers an explicit way to decline', () => {
+    expect(renderModal(pool, undefined, [])).toContain('Decide later');
+  });
+
+  it('is a labelled modal dialog', () => {
+    const html = renderModal(pool, undefined, []);
+    expect(html).toContain('role="dialog"');
+    expect(html).toContain('aria-modal="true"');
+    expect(html).toContain('aria-label');
+  });
+
+  it('escapes product titles', () => {
+    const html = renderModal(pool, undefined, [
+      { variantId: 'v1', title: '<img src=x onerror=alert(1)>' },
+    ]);
+    expect(html).not.toContain('<img src=x');
   });
 });

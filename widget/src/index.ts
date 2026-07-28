@@ -18,7 +18,7 @@ import {
 } from '../../app/entitlement';
 import { onCartChange, fetchCart, refreshCartSections, applySections, sectionsToRequest, type AjaxCart, type AjaxCartLine } from './cart';
 import { keepMounted, findDrawerMount, type MountResult } from './mount';
-import { renderOffer, renderChooser, tokenStyle, type RenderOffer, type GiftDisplay } from './render';
+import { renderOffer, renderRewardCard, renderModal, tokenStyle, type RenderOffer, type GiftDisplay } from './render';
 import { MutationQueue, addGift, removeLine, swapGift, type CartRoutes } from './mutate';
 import { reconcile, removalMessage, selectedVariant, type ClaimedLine } from './claim';
 import { lineInScope, canRenderOffer, type ResolvedScope } from './scope';
@@ -162,12 +162,12 @@ function boot(): void {
 
         const ent = entitlements[i];
 
-        // A chooser per tier the shopper must decide on, composed into the
-        // render rather than spliced in afterwards.
+        // A reward card per tier the shopper must decide on. The picker itself
+        // is a modal, opened from the card.
         const choosers = ent.gifts
           .filter((g) => g.requiresChoice)
           .map((g) =>
-            renderChooser(g, selectedVariant(claimed, offer.id, g.tierId), offer.giftDisplays)
+            renderRewardCard(g, selectedVariant(claimed, offer.id, g.tierId), offer.giftDisplays)
           )
           .join('');
 
@@ -246,19 +246,100 @@ function boot(): void {
       });
   };
 
-  // Claiming, swapping, and re-claiming, by delegation so re-rendering the
-  // host never leaves a dangling listener.
+  // ---- modal ------------------------------------------------------------
+
+  /** Open modal state. Kept outside the painted markup so a repaint cannot
+   *  close the picker under the shopper's hands. */
+  let modal: { offerId: string; tierId: string; selected?: string } | null = null;
+  const modalLayer = document.createElement('div');
+  let lastFocused: HTMLElement | null = null;
+
+  const closeModal = (): void => {
+    modal = null;
+    modalLayer.replaceChildren();
+    modalLayer.remove();
+    lastFocused?.focus();
+  };
+
+  const drawModal = (cart: AjaxCart): void => {
+    if (modal === null) return;
+    const ent = evaluate(config, cart)
+      .flatMap((e) => e.gifts)
+      .find((g) => g.offerId === modal!.offerId && g.tierId === modal!.tierId);
+
+    // The tier stopped being granted while the picker was open — the cart
+    // changed in another tab, or an item was removed. Closing is honest;
+    // leaving a picker for a reward they no longer have is not.
+    if (ent === undefined) {
+      closeModal();
+      return;
+    }
+
+    const offer = config.offers.find((o) => o.id === modal!.offerId);
+    modalLayer.innerHTML = renderModal(ent, modal.selected, offer?.giftDisplays);
+    if (!modalLayer.isConnected) document.body.appendChild(modalLayer);
+    modalLayer.querySelector<HTMLElement>('[data-cb-pick], .cb-modal__close')?.focus();
+  };
+
+  document.addEventListener('click', (event) => {
+    const target = event.target as Element | null;
+    if (target === null) return;
+
+    // Open
+    const opener = target.closest<HTMLElement>('[data-cb-open]');
+    if (opener !== null && [...hosts.values()].some((h) => h.content.contains(opener))) {
+      event.preventDefault();
+      lastFocused = opener;
+      modal = {
+        offerId: opener.dataset.cbOffer!,
+        tierId: opener.dataset.cbTier!,
+        selected: undefined,
+      };
+      void fetchCart(cartUrl).then((cart) => {
+        modal!.selected = selectedVariant(claimedLines(cart), modal!.offerId, modal!.tierId);
+        drawModal(cart);
+      });
+      return;
+    }
+
+    if (modal === null) return;
+
+    // Dismiss
+    if (target.closest('[data-cb-dismiss]') !== null) {
+      event.preventDefault();
+      closeModal();
+      return;
+    }
+
+    // Select a tile — highlights only; claiming is a separate, deliberate step.
+    const tile = target.closest<HTMLElement>('[data-cb-pick]');
+    if (tile !== null) {
+      event.preventDefault();
+      modal.selected = modal.selected === tile.dataset.cbVariant ? undefined : tile.dataset.cbVariant;
+      void fetchCart(cartUrl).then(drawModal);
+      return;
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (modal !== null && event.key === 'Escape') closeModal();
+  });
+
+  // ---- claiming ----------------------------------------------------------
+
   document.addEventListener('click', (event) => {
     const button = (event.target as Element | null)?.closest<HTMLElement>('[data-cb-claim]');
     if (button === null || button === undefined) return;
-    if (![...hosts.values()].some((h) => h.content.contains(button))) return;
+    if (!modalLayer.contains(button)) return;
 
     event.preventDefault();
     const offerId = button.dataset.cbOffer!;
     const tierId = button.dataset.cbTier!;
-    const variantId = button.dataset.cbVariant!;
+    const variantId = modal?.selected;
+    if (variantId === undefined) return;
 
-    button.closest<HTMLElement>('.cb')?.setAttribute('data-busy', '');
+    button.setAttribute('disabled', '');
+    closeModal();
 
     void queue
       .run(async () => {
