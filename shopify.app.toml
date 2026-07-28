@@ -90,4 +90,10 @@ redirect_urls = [
 ]
 
 [build]
-automatically_update_urls_on_dev = true
+# Deliberately false. When true, `shopify app dev` rewrites application_url to
+# an ephemeral trycloudflare tunnel and leaves it there. That tunnel dies with
+# the dev session, so the installed app then loads a dead host — which is
+# exactly what happened here. It is also a live hazard during App Store review:
+# a dev session started while a reviewer is testing would silently repoint the
+# app at a laptop.
+automatically_update_urls_on_dev = false
