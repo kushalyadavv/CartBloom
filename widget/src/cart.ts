@@ -193,8 +193,20 @@ export async function refreshCartSections(discovered: string[] = cartSectionIds(
   const ids = discovered.length > 0 ? discovered : COMMON_CART_SECTIONS;
   if (ids.length === 0) return false;
 
-  const url = `${window.location.pathname}?sections=${encodeURIComponent(ids.join(','))}`;
-  const response = await fetch(url, { headers: { Accept: 'application/json' } });
+  // Cache-busted deliberately. Section Rendering responses are cacheable, and a
+  // stale one renders the cart as it was — most visibly `is-empty` on a cart
+  // that is not. Swapping that in looks identical to the refresh doing nothing,
+  // which is exactly how this presented: the drawer only showed a claimed gift
+  // after a full page load, because only that bypassed the cache.
+  const url =
+    `${window.location.pathname}?sections=${encodeURIComponent(ids.join(','))}` +
+    `&_=${Date.now()}`;
+
+  const response = await fetch(url, {
+    headers: { Accept: 'application/json' },
+    credentials: 'same-origin',
+    cache: 'no-store',
+  });
   if (!response.ok) return false;
 
   const sections = (await response.json()) as Record<string, string>;
