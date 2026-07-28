@@ -330,3 +330,17 @@
   font-size: 0.78em;
   line-height: 1.4;
 }
+
+/* Visually hidden, but present for assistive technology. Not display:none —
+   that removes it from the accessibility tree and nothing is announced. */
+.cb__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}

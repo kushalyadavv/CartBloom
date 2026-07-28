@@ -22,6 +22,7 @@ import { renderOffer, renderChooser, tokenStyle, type RenderOffer, type GiftDisp
 import { MutationQueue, addGift, removeLine, swapGift, type CartRoutes } from './mutate';
 import { reconcile, removalMessage, selectedVariant, type ClaimedLine } from './claim';
 import { lineInScope, canRenderOffer, type ResolvedScope } from './scope';
+import { announcement } from './announce';
 
 interface OfferWithExtras extends Offer {
   scope?: ResolvedScope;
@@ -90,6 +91,22 @@ function boot(): void {
 
   let host: HTMLElement | null = null;
   let notice = '';
+  let previous: OfferEntitlements[] | null = null;
+
+  /**
+   * A live region that survives repaints.
+   *
+   * It must live outside the markup `paint` replaces: a live region that is
+   * removed and recreated is not announced, because assistive technology only
+   * reports changes to regions it was already observing.
+   */
+  const live = document.createElement('p');
+  live.className = 'cb__live';
+  live.setAttribute('role', 'status');
+  live.setAttribute('aria-live', 'polite');
+
+  /** The markup `paint` owns, so the live region above is never destroyed. */
+  const content = document.createElement('div');
 
   const paint = (cart: AjaxCart): void => {
     if (host === null) return;
@@ -129,9 +146,31 @@ function boot(): void {
       })
       .join('');
 
-    host.innerHTML =
-      html + (notice === '' ? '' : `<p class="cb__notice" role="status">${notice}</p>`);
+    // Repainting destroys the focused element. A keyboard shopper who claims a
+    // gift would otherwise be dumped back on <body> and lose their place, which
+    // makes the chooser effectively unusable without a mouse.
+    const active = document.activeElement as HTMLElement | null;
+    const focusKey =
+      active !== null && content.contains(active) && active.dataset.cbVariant !== undefined
+        ? `${active.dataset.cbOffer}|${active.dataset.cbTier}|${active.dataset.cbVariant}`
+        : null;
+
+    content.innerHTML =
+      html + (notice === '' ? '' : `<p class="cb__notice">${notice}</p>`);
     notice = '';
+
+    if (focusKey !== null) {
+      const [offerId, tierId, variantId] = focusKey.split('|');
+      content
+        .querySelector<HTMLElement>(
+          `[data-cb-offer="${offerId}"][data-cb-tier="${tierId}"][data-cb-variant="${variantId}"]`
+        )
+        ?.focus();
+    }
+
+    const say = announcement({ previous, current: entitlements });
+    if (say !== null) live.textContent = say;
+    previous = entitlements;
   };
 
   /**
@@ -167,7 +206,7 @@ function boot(): void {
   document.addEventListener('click', (event) => {
     const button = (event.target as Element | null)?.closest<HTMLElement>('[data-cb-claim]');
     if (button === null || button === undefined) return;
-    if (host === null || !host.contains(button)) return;
+    if (host === null || !content.contains(button)) return;
 
     event.preventDefault();
     const offerId = button.dataset.cbOffer!;
@@ -202,7 +241,9 @@ function boot(): void {
 
   observeForMount((result: MountResult) => {
     host = result.host;
-    host?.setAttribute('data-cartbloom-mount', result.reason);
+    if (host === null) return;
+    host.setAttribute('data-cartbloom-mount', result.reason);
+    host.replaceChildren(live, content);
     void fetchCart(cartUrl).then(sync);
   });
 
