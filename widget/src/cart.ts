@@ -176,6 +176,17 @@ export function cartSectionIds(): string[] {
  * cart page is almost always a section; the drawer often is not, which is why
  * the page updated in place while the drawer went stale.
  */
+/** Kept in step with mount.ts; the drawer has to be found in two places. */
+const DRAWER_SELECTORS = [
+  'cart-drawer-component',
+  'cart-drawer',
+  '#CartDrawer',
+  '.cart-drawer',
+  '.drawer--cart',
+  '[data-cart-drawer]',
+  '.mini-cart',
+];
+
 const COMMON_CART_SECTIONS = ['cart-drawer', 'cart-items', 'main-cart-items', 'cart-icon-bubble'];
 
 export async function refreshCartSections(discovered: string[] = cartSectionIds()): Promise<boolean> {
@@ -204,17 +215,21 @@ export async function refreshCartSections(discovered: string[] = cartSectionIds(
       continue;
     }
 
-    // Otherwise the theme rendered this from the layout. Match the returned
-    // markup's own root element against what is on the page and swap that,
-    // rather than guessing at a container.
-    const root = incoming.firstElementChild;
-    const tag = root?.tagName.toLowerCase();
-    if (tag === undefined) continue;
+    // Otherwise the theme rendered this from the layout rather than as a
+    // section, so there is no wrapper to replace. Find the drawer in both the
+    // response and the page and swap that specific element.
+    //
+    // Deliberately narrow. An earlier version matched on the returned root's
+    // tag name and called document.querySelector(tag), which for a <div> root
+    // selects an arbitrary div anywhere on the page and overwrites it.
+    for (const selector of DRAWER_SELECTORS) {
+      const incomingDrawer = incoming.querySelector(selector);
+      const liveDrawer = document.querySelector(selector);
+      if (incomingDrawer === null || liveDrawer === null) continue;
 
-    const live = document.querySelector(tag);
-    if (live !== null) {
-      live.innerHTML = root!.innerHTML;
+      liveDrawer.innerHTML = incomingDrawer.innerHTML;
       replaced = true;
+      break;
     }
   }
 
