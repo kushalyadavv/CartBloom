@@ -396,3 +396,13 @@
 [data-cartbloom-placement='cart-page'] .cb__message {
   font-size: 1.05em;
 }
+
+/*
+ * Drawer panels are usually flex columns, and the empty-cart region often
+ * grows to fill them. Without an explicit order, a host inserted before it can
+ * still be laid out after it.
+ */
+[data-cartbloom-host] {
+  order: -1;
+  flex: 0 0 auto;
+}

@@ -84,6 +84,26 @@ const INSERTION_HINTS = [
  * the item list is always inside the panel, even on a theme whose class names
  * we do not recognise.
  */
+/**
+ * The empty-cart body.
+ *
+ * An empty drawer renders none of the header or item containers above — Dawn
+ * swaps the whole inner region for a centred "Your cart is empty" panel. With
+ * nothing to anchor to, mounting fell through to prepending on the panel, and
+ * because the empty region is a flex child that fills the space, the bar ended
+ * up visually below it.
+ *
+ * Anchoring to the empty region explicitly puts the bar above it, which is
+ * where it matters most: an empty cart is exactly when a shopper needs to know
+ * what spending unlocks.
+ */
+const EMPTY_STATE_SELECTORS = [
+  '.drawer__inner-empty',
+  '.cart-drawer__empty-content',
+  '.cart__empty-text',
+  '.is-empty .drawer__inner > *',
+];
+
 const ITEMS_SELECTORS = [
   '.drawer__contents',
   '.cart-drawer__items',
@@ -139,6 +159,19 @@ export function findDrawerMount(root: ParentNode = document): MountResult {
   const header = firstMatch(panel, INSERTION_HINTS);
   if (header !== null) {
     return { host: ensureHost(header.parentElement ?? panel, header), reason: isStandard ? 'standard' : 'theme-selector' };
+  }
+
+  // Empty cart: anchor above the empty-state region.
+  const empty = firstMatch(panel, EMPTY_STATE_SELECTORS);
+  if (empty !== null && empty.parentElement !== null) {
+    const existing = empty.parentElement.querySelector<HTMLElement>(':scope > [data-cartbloom-host]');
+    if (existing !== null) {
+      return { host: existing, reason: isStandard ? 'standard' : 'theme-selector' };
+    }
+    const created = document.createElement('div');
+    created.setAttribute('data-cartbloom-host', '');
+    empty.insertAdjacentElement('beforebegin', created);
+    return { host: created, reason: isStandard ? 'standard' : 'theme-selector' };
   }
 
   // No recognisable header. Sit directly above the line items, which is still

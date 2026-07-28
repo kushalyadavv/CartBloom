@@ -245,3 +245,65 @@ describe('keepMounted — surviving theme re-renders', () => {
     expect(onMounted).toHaveBeenCalledTimes(1);
   });
 });
+
+/**
+ * Dawn's empty drawer, taken verbatim from a real store. It shares no anchor
+ * with the filled state: no header, no contents container, no form.
+ */
+const DAWN_EMPTY = `
+  <cart-drawer class="drawer is-empty animate active">
+    <div id="CartDrawer" class="cart-drawer">
+      <div id="CartDrawer-Overlay" class="cart-drawer__overlay"></div>
+      <div class="drawer__inner" role="dialog">
+        <div class="drawer__inner-empty">
+          <div class="cart-drawer__warnings center">
+            <div class="cart-drawer__empty-content">
+              <h2 class="cart__empty-text">Your cart is empty</h2>
+              <a href="/collections/all" class="button">Continue shopping</a>
+            </div>
+          </div>
+          <div class="cart-drawer__collection"></div>
+        </div>
+      </div>
+    </div>
+  </cart-drawer>`;
+
+describe('findDrawerMount — empty cart', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('mounts above the empty-state region, not after it', () => {
+    render(DAWN_EMPTY);
+    const host = findDrawerMount().host!;
+    expect(host.nextElementSibling?.className).toContain('drawer__inner-empty');
+  });
+
+  it('stays inside the sliding panel', () => {
+    render(DAWN_EMPTY);
+    const host = findDrawerMount().host!;
+    expect(host.closest('.drawer__inner')).not.toBeNull();
+    expect(host.closest('.cart-drawer__overlay')).toBeNull();
+  });
+
+  it('is idempotent across the empty-state path', () => {
+    render(DAWN_EMPTY);
+    expect(findDrawerMount().host).toBe(findDrawerMount().host);
+    expect(document.querySelectorAll('[data-cartbloom-host]')).toHaveLength(1);
+  });
+
+  it('re-mounts correctly when the cart goes from empty to filled', async () => {
+    render(DAWN_EMPTY);
+    const onMounted = vi.fn();
+    const stop = keepMounted(onMounted);
+    expect(onMounted).toHaveBeenCalledTimes(1);
+
+    // The theme swaps the whole drawer when the first item lands.
+    document.body.innerHTML = DAWN;
+    await vi.waitFor(() => expect(onMounted).toHaveBeenCalledTimes(2));
+
+    const host = document.querySelector('[data-cartbloom-host]')!;
+    expect(host.previousElementSibling?.className).toContain('drawer__header');
+    stop();
+  });
+});
