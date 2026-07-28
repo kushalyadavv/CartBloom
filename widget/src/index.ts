@@ -17,7 +17,7 @@ import {
   type OfferEntitlements,
 } from '../../app/entitlement';
 import { onCartChange, fetchCart, refreshCartSections, type AjaxCart, type AjaxCartLine } from './cart';
-import { observeForMount, findDrawerMount, type MountResult } from './mount';
+import { keepMounted, findDrawerMount, type MountResult } from './mount';
 import { renderOffer, renderChooser, tokenStyle, type RenderOffer, type GiftDisplay } from './render';
 import { MutationQueue, addGift, removeLine, swapGift, type CartRoutes } from './mutate';
 import { reconcile, removalMessage, selectedVariant, type ClaimedLine } from './claim';
@@ -314,9 +314,11 @@ function boot(): void {
   adoptDeclaredHosts();
   if (hosts.size > 0) void fetchCart(cartUrl).then(sync);
 
-  observeForMount((result: MountResult) => {
+  // Continuous, not one-shot: the theme rebuilds its drawer on every cart
+  // change and takes our host with it each time.
+  keepMounted((result: MountResult) => {
     attach(result);
-    void fetchCart(cartUrl).then(sync);
+    void fetchCart(cartUrl).then(paint);
   });
 
   onCartChange(sync, cartUrl);

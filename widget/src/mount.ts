@@ -160,41 +160,47 @@ export function findDrawerMount(root: ParentNode = document): MountResult {
 }
 
 /**
- * Watch for a drawer that does not exist yet.
+ * Keep the widget mounted, for as long as the page lives.
  *
- * Calls back once, on the first successful mount, then disconnects. Themes that
- * rebuild the drawer on every open would otherwise re-trigger endlessly; the
- * host element is idempotent, so a caller that wants to survive that can simply
- * call again.
+ * Mounting cannot be a one-shot operation. Themes rebuild the cart drawer on
+ * every change — empty to filled, adding a line, removing one — and each
+ * rebuild destroys our host. An observer that disconnects after the first
+ * success produces exactly the symptoms this replaced: the bar missing on an
+ * empty cart, missing intermittently, and vanishing for good once a gift is
+ * removed.
+ *
+ * So the observer runs for the life of the page and re-mounts whenever the host
+ * is gone. The cost is real but small: the callback only fires when a mount
+ * actually happened, and `findDrawerMount` is a handful of `querySelector`
+ * calls guarded by an early exit.
  */
-export function observeForMount(
-  onMounted: (result: MountResult) => void,
-  timeoutMs = 30_000
-): () => void {
-  const immediate = findDrawerMount();
-  if (immediate.host !== null) {
-    onMounted(immediate);
-    return () => {};
-  }
+export function keepMounted(onMounted: (result: MountResult) => void): () => void {
+  let current: HTMLElement | null = null;
+
+  const ensure = (): void => {
+    // Still attached and still ours — nothing to do. This is the common case
+    // and keeps the observer cheap.
+    if (current !== null && current.isConnected) return;
+
+    const result = findDrawerMount();
+    if (result.host === null) return;
+
+    current = result.host;
+    onMounted(result);
+  };
+
+  ensure();
 
   const observer = new MutationObserver(() => {
-    const result = findDrawerMount();
-    if (result.host !== null) {
-      observer.disconnect();
-      window.clearTimeout(timer);
-      onMounted(result);
-    }
+    ensure();
   });
-
   observer.observe(document.body, { childList: true, subtree: true });
-
-  // A permanent observer on a busy storefront is a real cost. If no drawer has
-  // appeared in 30s there almost certainly isn't one, and the cart page block
-  // covers that case.
-  const timer = window.setTimeout(() => observer.disconnect(), timeoutMs);
 
   return () => {
     observer.disconnect();
-    window.clearTimeout(timer);
+    current = null;
   };
 }
+
+/** @deprecated Use {@link keepMounted}; one-shot mounting loses the host on re-render. */
+export const observeForMount = keepMounted;

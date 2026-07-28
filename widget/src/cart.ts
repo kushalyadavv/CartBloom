@@ -168,7 +168,18 @@ export function cartSectionIds(): string[] {
  * Returns true if anything was replaced, so the caller knows to re-mount — the
  * swap destroys our host along with the theme's markup.
  */
-export async function refreshCartSections(ids: string[] = cartSectionIds()): Promise<boolean> {
+/**
+ * Section names themes conventionally use for cart UI.
+ *
+ * Tried when the drawer is not wrapped in a `shopify-section-*` element, which
+ * happens when a theme renders it from the layout rather than as a section. The
+ * cart page is almost always a section; the drawer often is not, which is why
+ * the page updated in place while the drawer went stale.
+ */
+const COMMON_CART_SECTIONS = ['cart-drawer', 'cart-items', 'main-cart-items', 'cart-icon-bubble'];
+
+export async function refreshCartSections(discovered: string[] = cartSectionIds()): Promise<boolean> {
+  const ids = discovered.length > 0 ? discovered : COMMON_CART_SECTIONS;
   if (ids.length === 0) return false;
 
   const url = `${window.location.pathname}?sections=${encodeURIComponent(ids.join(','))}`;
@@ -180,15 +191,31 @@ export async function refreshCartSections(ids: string[] = cartSectionIds()): Pro
 
   for (const id of ids) {
     const markup = sections[id];
-    const target = document.getElementById(`shopify-section-${id}`);
-    if (typeof markup !== 'string' || target === null) continue;
+    if (typeof markup !== 'string' || markup === '') continue;
 
-    // The response is a full section wrapper; take its children so we do not
-    // nest one section wrapper inside another.
     const parsed = new DOMParser().parseFromString(markup, 'text/html');
     const incoming = parsed.getElementById(`shopify-section-${id}`) ?? parsed.body;
-    target.innerHTML = incoming.innerHTML;
-    replaced = true;
+
+    // Preferred: the section wrapper is on the page and we replace its contents.
+    const wrapper = document.getElementById(`shopify-section-${id}`);
+    if (wrapper !== null) {
+      wrapper.innerHTML = incoming.innerHTML;
+      replaced = true;
+      continue;
+    }
+
+    // Otherwise the theme rendered this from the layout. Match the returned
+    // markup's own root element against what is on the page and swap that,
+    // rather than guessing at a container.
+    const root = incoming.firstElementChild;
+    const tag = root?.tagName.toLowerCase();
+    if (tag === undefined) continue;
+
+    const live = document.querySelector(tag);
+    if (live !== null) {
+      live.innerHTML = root!.innerHTML;
+      replaced = true;
+    }
   }
 
   return replaced;

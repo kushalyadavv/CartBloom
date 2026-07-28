@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { findDrawerMount, observeForMount } from './mount';
+import { findDrawerMount, observeForMount, keepMounted } from './mount';
 
 const HORIZON = `
   <cart-drawer-component class="cart-drawer">
@@ -180,5 +180,68 @@ describe('findDrawerMount — real theme structures', () => {
 
     expect(findDrawerMount().host).toBe(findDrawerMount().host);
     expect(document.querySelectorAll('[data-cartbloom-host]')).toHaveLength(1);
+  });
+});
+
+/**
+ * Mounting must survive the theme rebuilding its drawer.
+ *
+ * A one-shot observer produced three separate reported bugs: the bar missing on
+ * an empty cart, missing intermittently, and vanishing permanently once a gift
+ * was removed. All were the same cause — the theme re-renders the drawer on
+ * every cart change and takes the host with it.
+ */
+describe('keepMounted — surviving theme re-renders', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('re-mounts after the theme replaces the drawer', async () => {
+    render(HORIZON);
+    const onMounted = vi.fn();
+    const stop = keepMounted(onMounted);
+    expect(onMounted).toHaveBeenCalledTimes(1);
+
+    // What a theme does when the cart changes.
+    document.body.innerHTML = HORIZON;
+    await vi.waitFor(() => expect(onMounted).toHaveBeenCalledTimes(2));
+
+    expect(document.querySelector('[data-cartbloom-host]')).not.toBeNull();
+    stop();
+  });
+
+  it('mounts when a drawer appears having started empty', async () => {
+    render(NO_DRAWER);
+    const onMounted = vi.fn();
+    const stop = keepMounted(onMounted);
+    expect(onMounted).not.toHaveBeenCalled();
+
+    document.body.insertAdjacentHTML('beforeend', HORIZON);
+    await vi.waitFor(() => expect(onMounted).toHaveBeenCalledTimes(1));
+    stop();
+  });
+
+  it('does not re-fire while the host is still attached', async () => {
+    render(HORIZON);
+    const onMounted = vi.fn();
+    const stop = keepMounted(onMounted);
+
+    // Unrelated DOM churn, of the kind a storefront produces constantly.
+    document.body.insertAdjacentHTML('beforeend', '<div>noise</div>');
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(onMounted).toHaveBeenCalledTimes(1);
+    stop();
+  });
+
+  it('stops re-mounting once torn down', async () => {
+    render(HORIZON);
+    const onMounted = vi.fn();
+    const stop = keepMounted(onMounted);
+    stop();
+
+    document.body.innerHTML = HORIZON;
+    await new Promise((r) => setTimeout(r, 20));
+    expect(onMounted).toHaveBeenCalledTimes(1);
   });
 });
