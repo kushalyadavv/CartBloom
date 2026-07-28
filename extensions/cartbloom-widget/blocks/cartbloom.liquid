@@ -16,7 +16,21 @@
   that renders a progress bar it cannot compute would show a wrong number.
 {% endcomment %}
 
-{% assign cfg = shop.metafields.app.cartbloom-widget-config.value %}
+{%- comment -%}
+  The reserved prefix is the bracketed string "$app", not a dot-path segment.
+
+  `shop.metafields.app.…` looks plausible and is silently wrong: Liquid reads
+  `app` as a literal namespace name, finds nothing (the real namespace is
+  `app--<app_id>`), and yields an empty object. The widget then renders nothing
+  on a store where both the metafield and its definition are perfectly correct
+  — no error, no warning, nothing in the console.
+
+  "$app" is the portable alias for `app--<app_id>`, so this survives moving
+  between development and production apps without hardcoding an ID.
+
+  https://shopify.dev/docs/apps/build/online-store/theme-app-extensions/configuration
+{%- endcomment -%}
+{%- assign cfg = shop.metafields["$app"]["cartbloom-widget-config"].value -%}
 
 {% if cfg %}
   <script>
@@ -31,6 +45,13 @@
 
   {{ 'cartbloom.css' | asset_url | stylesheet_tag }}
   <script src="{{ 'cartbloom.js' | asset_url }}" defer></script>
+{% else %}
+  {%- comment -%}
+    Deliberately visible in view-source. "Nothing rendered" is otherwise
+    indistinguishable from "the embed is not enabled", and that ambiguity cost
+    real time to diagnose once already.
+  {%- endcomment -%}
+  <!-- CartBloom: embed active, but shop metafield app/cartbloom-widget-config is empty or unreadable -->
 {% endif %}
 
 {% schema %}
