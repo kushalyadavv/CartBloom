@@ -135,3 +135,61 @@ export function onCartChange(listener: CartListener, cartUrl = '/cart.js'): () =
     for (const teardown of teardowns) teardown();
   };
 }
+
+/**
+ * Shopify section ids that contain the cart UI.
+ *
+ * Sections are wrapped in `<div id="shopify-section-{id}">`. Finding them from
+ * the drawer outwards means we refresh whatever the theme actually renders the
+ * cart with, without knowing its section names.
+ */
+export function cartSectionIds(): string[] {
+  const ids = new Set<string>();
+  for (const selector of ['cart-drawer-component', 'cart-drawer', '#CartDrawer', '.cart-drawer']) {
+    const section = document.querySelector(selector)?.closest('[id^="shopify-section-"]');
+    const id = section?.id.replace('shopify-section-', '');
+    if (id !== undefined && id !== '') ids.add(id);
+  }
+  return [...ids];
+}
+
+/**
+ * Re-render the theme's own cart markup.
+ *
+ * The AJAX cart API is required for gift claims — `Shopify.actions.updateCart`
+ * accepts only `{merchandiseId, quantity}` and cannot carry line properties. But
+ * mutating that way leaves the theme unaware, so its drawer shows stale line
+ * items until a full page load.
+ *
+ * The Section Rendering API closes that gap: ask Shopify to re-render the same
+ * sections the theme uses and swap the markup in. This is how Dawn and Horizon
+ * refresh their own drawers.
+ *
+ * Returns true if anything was replaced, so the caller knows to re-mount — the
+ * swap destroys our host along with the theme's markup.
+ */
+export async function refreshCartSections(ids: string[] = cartSectionIds()): Promise<boolean> {
+  if (ids.length === 0) return false;
+
+  const url = `${window.location.pathname}?sections=${encodeURIComponent(ids.join(','))}`;
+  const response = await fetch(url, { headers: { Accept: 'application/json' } });
+  if (!response.ok) return false;
+
+  const sections = (await response.json()) as Record<string, string>;
+  let replaced = false;
+
+  for (const id of ids) {
+    const markup = sections[id];
+    const target = document.getElementById(`shopify-section-${id}`);
+    if (typeof markup !== 'string' || target === null) continue;
+
+    // The response is a full section wrapper; take its children so we do not
+    // nest one section wrapper inside another.
+    const parsed = new DOMParser().parseFromString(markup, 'text/html');
+    const incoming = parsed.getElementById(`shopify-section-${id}`) ?? parsed.body;
+    target.innerHTML = incoming.innerHTML;
+    replaced = true;
+  }
+
+  return replaced;
+}

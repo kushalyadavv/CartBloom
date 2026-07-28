@@ -16,8 +16,8 @@ import {
   type Offer,
   type OfferEntitlements,
 } from '../../app/entitlement';
-import { onCartChange, fetchCart, type AjaxCart, type AjaxCartLine } from './cart';
-import { observeForMount, type MountResult } from './mount';
+import { onCartChange, fetchCart, refreshCartSections, type AjaxCart, type AjaxCartLine } from './cart';
+import { observeForMount, findDrawerMount, type MountResult } from './mount';
 import { renderOffer, renderChooser, tokenStyle, type RenderOffer, type GiftDisplay } from './render';
 import { MutationQueue, addGift, removeLine, swapGift, type CartRoutes } from './mutate';
 import { reconcile, removalMessage, selectedVariant, type ClaimedLine } from './claim';
@@ -213,9 +213,9 @@ function boot(): void {
       .run(async () => {
         for (const r of remove) await removeLine(r.key, routes);
         for (const a of add) await addGift(a, routes);
-        return fetchCart(cartUrl);
+        return refreshAndRepaint();
       })
-      .then(paint, () => {
+      .catch(() => {
         notice = 'We could not update your gift. Please try again.';
         void fetchCart(cartUrl).then(paint);
       });
@@ -251,19 +251,38 @@ function boot(): void {
         } else {
           await addGift({ variantId, offerId, tierId }, routes);
         }
-        return fetchCart(cartUrl);
+        return refreshAndRepaint();
       })
-      .then(paint, () => {
+      .catch(() => {
         notice = 'We could not update your gift. Please try again.';
         void fetchCart(cartUrl).then(paint);
       });
   });
 
-  observeForMount((result: MountResult) => {
+  const attach = (result: MountResult): void => {
     host = result.host;
     if (host === null) return;
     host.setAttribute('data-cartbloom-mount', result.reason);
     host.replaceChildren(live, content);
+  };
+
+  /**
+   * Re-render the theme's cart markup, then re-attach.
+   *
+   * We mutate through the AJAX API because gift claims travel as line
+   * properties and `Shopify.actions.updateCart` cannot carry them. That leaves
+   * the theme unaware of the change, so its drawer shows stale line items until
+   * a page load. Refreshing the sections fixes that — but the swap destroys our
+   * host along with the theme's markup, so mounting has to happen again.
+   */
+  const refreshAndRepaint = async (): Promise<void> => {
+    const replaced = await refreshCartSections().catch(() => false);
+    if (replaced) attach(findDrawerMount());
+    paint(await fetchCart(cartUrl));
+  };
+
+  observeForMount((result: MountResult) => {
+    attach(result);
     void fetchCart(cartUrl).then(sync);
   });
 
