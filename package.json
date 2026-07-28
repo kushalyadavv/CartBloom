@@ -2,7 +2,8 @@
   "name": "cart-bloom",
   "private": true,
   "scripts": {
-    "build": "react-router build",
+    "build": "react-router build && node scripts/check-client-id.mjs",
+    "deploy:worker": "npm run build && wrangler deploy -c build/server/wrangler.json",
     "dev": "npm run build:widget && shopify app dev",
     "config:link": "shopify app config link",
     "generate": "shopify app generate",

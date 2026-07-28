@@ -1,5 +1,7 @@
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { reactRouter } from "@react-router/dev/vite";
+import { readFileSync } from "node:fs";
+
 import { defineConfig, type UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -15,6 +17,19 @@ if (
   process.env.SHOPIFY_APP_URL = process.env.HOST;
   delete process.env.HOST;
 }
+
+// The client id is baked into the bundle at build time, read from the same
+// TOML that configures the app, so the meta tag and the deployed app can never
+// disagree. The playbook is explicit that App Bridge must not be configured
+// from a runtime value injected by JS.
+const clientId = (() => {
+  const toml = readFileSync(new URL("./shopify.app.toml", import.meta.url), "utf8");
+  const match = toml.match(/^client_id\s*=\s*"([^"]+)"/m);
+  if (!match) {
+    throw new Error("client_id missing from shopify.app.toml — refusing to build an app that cannot authenticate");
+  }
+  return match[1];
+})();
 
 const host = new URL(process.env.SHOPIFY_APP_URL || "http://localhost")
   .hostname;
@@ -56,6 +71,9 @@ export default defineConfig({
     reactRouter(),
     tsconfigPaths(),
   ],
+  define: {
+    __SHOPIFY_API_KEY__: JSON.stringify(clientId),
+  },
   build: {
     assetsInlineLimit: 0,
   },
