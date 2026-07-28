@@ -13,8 +13,16 @@
  * leak into the theme.
  */
 
-.cb {
-  /* Defaults. Presets override these; merchant tokens override presets. */
+.cb,
+.cb-modal {
+  /*
+   * Defaults. Presets override these; merchant tokens override presets.
+   *
+   * Applied to .cb-modal as well as .cb because the modal is portalled to
+   * <body> to escape the drawer's stacking and overflow. Scoped to .cb alone,
+   * every var() inside it resolved to nothing -- the claim button rendered
+   * white-on-white and the tiles lost their borders.
+   */
   --cb-fill: linear-gradient(90deg, #ff5c8a, #ff7a5c, #ffb020);
   --cb-track: rgba(128, 128, 128, 0.16);
   --cb-thickness: 12px;
@@ -206,13 +214,15 @@
 
 /* --------------------------------------------------------------- presets --- */
 
-.cb[data-preset='candy'] {
+.cb[data-preset='candy'],
+.cb-modal[data-preset='candy'] {
   --cb-fill: linear-gradient(90deg, #ff5c8a, #ff7a5c, #ffb020);
   --cb-unlocked-color: #ff5c8a;
   --cb-thickness: 14px;
 }
 
-.cb[data-preset='quiet'] {
+.cb[data-preset='quiet'],
+.cb-modal[data-preset='quiet'] {
   --cb-fill: currentColor;
   --cb-track: rgba(128, 128, 128, 0.18);
   --cb-thickness: 3px;
@@ -225,13 +235,15 @@
   display: none;
 }
 
-.cb[data-preset='levelup'] {
+.cb[data-preset='levelup'],
+.cb-modal[data-preset='levelup'] {
   --cb-fill: linear-gradient(90deg, #10b981, #f59e0b, #8b5cf6);
   --cb-unlocked-color: #10b981;
   --cb-thickness: 11px;
 }
 
-.cb[data-preset='cool'] {
+.cb[data-preset='cool'],
+.cb-modal[data-preset='cool'] {
   --cb-fill: linear-gradient(90deg, #60a5fa, #a78bfa);
   --cb-unlocked-color: #6366f1;
 }
@@ -241,7 +253,8 @@
  * The fallback chain matters: a theme defining none of these still gets a
  * sensible widget rather than an invisible one.
  */
-.cb[data-preset='theme-match'] {
+.cb[data-preset='theme-match'],
+.cb-modal[data-preset='theme-match'] {
   --cb-fill: var(--color-accent, var(--color-primary, var(--colorBtnPrimary, currentColor)));
   --cb-unlocked-color: var(--color-accent, var(--color-primary, currentColor));
   --cb-track: rgba(128, 128, 128, 0.16);
@@ -365,7 +378,7 @@
   padding: 9px 16px;
   border: 0;
   border-radius: 99px;
-  background: var(--cb-unlocked-color);
+  background: var(--cb-unlocked-color, #111);
   color: #fff;
   font: inherit;
   font-size: 0.78em;
@@ -400,7 +413,7 @@
 /* Until publish-time resolution fills in images, show a neutral disc rather
    than a broken-image icon. */
 .cb-thumb--blank {
-  background: var(--cb-track);
+  background: var(--cb-track, rgba(128, 128, 128, 0.16));
 }
 
 /* ================================================================  modal === */
@@ -526,7 +539,7 @@
 
 .cb-tile__media--blank {
   display: block;
-  background: var(--cb-track);
+  background: var(--cb-track, rgba(128, 128, 128, 0.16));
 }
 
 .cb-tile__title {
@@ -572,7 +585,9 @@
   padding: 13px;
   border: 0;
   border-radius: 10px;
-  background: var(--cb-unlocked-color);
+  /* Fallback is not decoration: an unresolved token here means an invisible
+     primary action. */
+  background: var(--cb-unlocked-color, #111);
   color: #fff;
   font: inherit;
   font-weight: 800;

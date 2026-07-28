@@ -268,7 +268,8 @@ export function renderRewardCard(
 export function renderModal(
   entitlement: { offerId: string; tierId: string; candidates: Array<{ variantId: string }> },
   selected: string | undefined,
-  displays: GiftDisplay[] = []
+  displays: GiftDisplay[] = [],
+  preset = 'candy'
 ): string {
   const tiles = entitlement.candidates
     .map((candidate) => {
@@ -293,7 +294,8 @@ export function renderModal(
     .join('');
 
   return (
-    `<div class="cb-modal" role="dialog" aria-modal="true" aria-label="Select your free gift" data-cb-modal>` +
+    `<div class="cb-modal" data-preset="${escapeHtml(preset)}" role="dialog" aria-modal="true"` +
+    ` aria-label="Select your free gift" data-cb-modal>` +
     `<div class="cb-modal__backdrop" data-cb-dismiss></div>` +
     `<div class="cb-modal__panel">` +
     `<div class="cb-modal__head">` +

@@ -276,7 +276,7 @@ function boot(): void {
     }
 
     const offer = config.offers.find((o) => o.id === modal!.offerId);
-    modalLayer.innerHTML = renderModal(ent, modal.selected, offer?.giftDisplays);
+    modalLayer.innerHTML = renderModal(ent, modal.selected, offer?.giftDisplays, offer?.design?.preset);
     if (!modalLayer.isConnected) document.body.appendChild(modalLayer);
     modalLayer.querySelector<HTMLElement>('[data-cb-pick], .cb-modal__close')?.focus();
   };
