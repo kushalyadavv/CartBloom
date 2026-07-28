@@ -14,6 +14,7 @@
 import { resolveOffer, type Cart, type CartLine, type Offer, type OfferEntitlements } from '../../../app/entitlement';
 import { onCartChange, fetchCart, type AjaxCart, type AjaxCartLine } from './cart';
 import { observeForMount, type MountResult } from './mount';
+import { renderOffer, tokenStyle, type RenderOffer } from './render';
 
 interface OfferWithScope extends Offer {
   scope?: { kind: 'ENTIRE_CART' | 'COLLECTIONS' | 'PRODUCTS'; ids?: string[] };
@@ -88,21 +89,26 @@ function boot(): void {
   let host: HTMLElement | null = null;
 
   const paint = (cart: AjaxCart): void => {
-    const entitlements = evaluate(config, cart);
     if (host === null) return;
-    // Task 31 renders here. Until then, expose enough to verify the wiring
-    // from the console on a real storefront.
-    host.setAttribute(
-      'data-cartbloom-state',
-      JSON.stringify(
-        entitlements.map((e) => ({
-          offer: e.offerId,
-          measure: e.measure,
-          unlocked: e.unlockedTierIds,
-          gifts: e.gifts.length,
-        }))
-      )
-    );
+    const entitlements = evaluate(config, cart);
+
+    // An offer with no tiers, or one whose placement excludes the drawer,
+    // renders nothing rather than an empty bar.
+    const html = config.offers
+      .map((offer, i) => {
+        if (offer.placement?.drawer === false) return '';
+        if (offer.tiers.length === 0) return '';
+        const inner = renderOffer({
+          offer: offer as RenderOffer,
+          entitlements: entitlements[i],
+          moneyFormat: config.moneyFormat,
+        });
+        const tokens = tokenStyle((offer as RenderOffer).design?.tokens);
+        return tokens === '' ? inner : inner.replace('<div class="cb"', `<div class="cb" data-tokens style="${tokens}"`);
+      })
+      .join('');
+
+    host.innerHTML = html;
   };
 
   observeForMount((result: MountResult) => {
