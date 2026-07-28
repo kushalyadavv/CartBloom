@@ -1,0 +1,21 @@
+# CartBloom admin app on Cloudflare Workers.
+#
+# Task 13 measured the floor this runs inside: session-token verification plus
+# one D1 read plus shell render costs 3 ms CPU of a 10 ms free-tier cap. Roughly
+# 6 ms is left for feature work, which is why the admin serves a thin shell and
+# lets Polaris render client-side. See docs/superpowers/plans/workers-deploy-result.md
+name = "cartbloom"
+main = "./workers/app.ts"
+compatibility_date = "2026-07-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./build/client"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cartbloom"
+database_id = "a2393e17-cae9-4074-b8fd-462f08492cbb"
+
+[observability]
+enabled = true

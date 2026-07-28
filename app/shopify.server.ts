@@ -1,34 +1,66 @@
-import "@shopify/shopify-app-react-router/adapters/node";
+/**
+ * Shopify app configuration, built per environment rather than at module scope.
+ *
+ * The template calls `shopifyApp()` once at import time and reads `process.env`.
+ * Neither works on Workers: there is no `process`, and bindings like `env.DB`
+ * exist only inside a request. So this exports a factory, and the Worker entry
+ * hands it `env` through the load context.
+ *
+ * The instance is cached per `env` object. Workers reuses an isolate across
+ * requests, so the config is built once per isolate rather than per request —
+ * which matters against the 10 ms CPU cap that Task 13 measured 3 ms of.
+ */
+
+import type { D1Database } from '@cloudflare/workers-types';
 import {
   ApiVersion,
   AppDistribution,
   shopifyApp,
-} from "@shopify/shopify-app-react-router/server";
-import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
-import prisma from "./db.server";
+} from '@shopify/shopify-app-react-router/server';
 
-const shopify = shopifyApp({
-  apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
-  apiVersion: ApiVersion.July26,
-  scopes: process.env.SCOPES?.split(","),
-  appUrl: process.env.SHOPIFY_APP_URL || "",
-  authPathPrefix: "/auth",
-  sessionStorage: new PrismaSessionStorage(prisma),
-  distribution: AppDistribution.AppStore,
-  future: {
-    expiringOfflineAccessTokens: true,
-  },
-  ...(process.env.SHOP_CUSTOM_DOMAIN
-    ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }
-    : {}),
-});
+import { D1SessionStorage } from './session-storage.server';
 
-export default shopify;
-export const apiVersion = ApiVersion.July26;
-export const addDocumentResponseHeaders = shopify.addDocumentResponseHeaders;
-export const authenticate = shopify.authenticate;
-export const unauthenticated = shopify.unauthenticated;
-export const login = shopify.login;
-export const registerWebhooks = shopify.registerWebhooks;
-export const sessionStorage = shopify.sessionStorage;
+export interface Env {
+  DB: D1Database;
+  SHOPIFY_API_KEY: string;
+  SHOPIFY_API_SECRET: string;
+  SHOPIFY_APP_URL: string;
+  SCOPES?: string;
+  SHOP_CUSTOM_DOMAIN?: string;
+}
+
+export const API_VERSION = ApiVersion.July26;
+
+type ShopifyInstance = ReturnType<typeof shopifyApp>;
+
+const cache = new WeakMap<Env, ShopifyInstance>();
+
+export function getShopify(env: Env): ShopifyInstance {
+  const existing = cache.get(env);
+  if (existing !== undefined) return existing;
+
+  const instance = shopifyApp({
+    apiKey: env.SHOPIFY_API_KEY,
+    apiSecretKey: env.SHOPIFY_API_SECRET,
+    apiVersion: API_VERSION,
+    scopes: env.SCOPES?.split(','),
+    appUrl: env.SHOPIFY_APP_URL,
+    authPathPrefix: '/auth',
+    sessionStorage: new D1SessionStorage(env.DB),
+    distribution: AppDistribution.AppStore,
+    future: {
+      // Non-expiring offline tokens are rejected by the Admin API outright.
+      expiringOfflineAccessTokens: true,
+    },
+    ...(env.SHOP_CUSTOM_DOMAIN ? { customShopDomains: [env.SHOP_CUSTOM_DOMAIN] } : {}),
+  });
+
+  cache.set(env, instance);
+  return instance;
+}
+
+/** What loaders and actions receive. Populated by the Worker entry. */
+export interface AppLoadContext {
+  env: Env;
+  shopify: ShopifyInstance;
+}

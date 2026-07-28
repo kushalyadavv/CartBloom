@@ -1,0 +1,66 @@
+{
+  "_jsx-runtime-ChgqjleF.js": {
+    "file": "assets/jsx-runtime-ChgqjleF.js",
+    "name": "jsx-runtime"
+  },
+  "app/root.tsx?__react-router-build-client-route": {
+    "file": "assets/root-BA_rByuI.js",
+    "name": "root",
+    "src": "app/root.tsx?__react-router-build-client-route",
+    "isEntry": true,
+    "imports": [
+      "_jsx-runtime-ChgqjleF.js"
+    ]
+  },
+  "app/routes/_index.tsx?__react-router-build-client-route": {
+    "file": "assets/_index-l0sNRNKZ.js",
+    "name": "_index",
+    "src": "app/routes/_index.tsx?__react-router-build-client-route",
+    "isEntry": true
+  },
+  "app/routes/app._index.tsx?__react-router-build-client-route": {
+    "file": "assets/app._index-DQ1OP2QB.js",
+    "name": "app._index",
+    "src": "app/routes/app._index.tsx?__react-router-build-client-route",
+    "isEntry": true,
+    "imports": [
+      "_jsx-runtime-ChgqjleF.js"
+    ]
+  },
+  "app/routes/app.tsx?__react-router-build-client-route": {
+    "file": "assets/app-BKHOAojS.js",
+    "name": "app",
+    "src": "app/routes/app.tsx?__react-router-build-client-route",
+    "isEntry": true,
+    "imports": [
+      "_jsx-runtime-ChgqjleF.js"
+    ]
+  },
+  "app/routes/auth.$.tsx?__react-router-build-client-route": {
+    "file": "assets/auth._-l0sNRNKZ.js",
+    "name": "auth._",
+    "src": "app/routes/auth.$.tsx?__react-router-build-client-route",
+    "isEntry": true
+  },
+  "app/routes/webhooks.app.scopes_update.tsx?__react-router-build-client-route": {
+    "file": "assets/webhooks.app.scopes_update-l0sNRNKZ.js",
+    "name": "webhooks.app.scopes_update",
+    "src": "app/routes/webhooks.app.scopes_update.tsx?__react-router-build-client-route",
+    "isEntry": true
+  },
+  "app/routes/webhooks.app.uninstalled.tsx?__react-router-build-client-route": {
+    "file": "assets/webhooks.app.uninstalled-l0sNRNKZ.js",
+    "name": "webhooks.app.uninstalled",
+    "src": "app/routes/webhooks.app.uninstalled.tsx?__react-router-build-client-route",
+    "isEntry": true
+  },
+  "node_modules/@react-router/dev/dist/config/defaults/entry.client.tsx": {
+    "file": "assets/entry.client-mam7gAAK.js",
+    "name": "entry.client",
+    "src": "node_modules/@react-router/dev/dist/config/defaults/entry.client.tsx",
+    "isEntry": true,
+    "imports": [
+      "_jsx-runtime-ChgqjleF.js"
+    ]
+  }
+}

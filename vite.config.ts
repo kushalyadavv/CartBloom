@@ -1,3 +1,4 @@
+import { cloudflare } from "@cloudflare/vite-plugin";
 import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig, type UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -49,6 +50,9 @@ export default defineConfig({
     },
   },
   plugins: [
+    // The SSR environment must be the Worker, so loaders run against real
+    // bindings in dev rather than a Node shim that behaves differently.
+    cloudflare({ viteEnvironment: { name: "ssr" } }),
     reactRouter(),
     tsconfigPaths(),
   ],
