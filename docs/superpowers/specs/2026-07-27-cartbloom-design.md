@@ -80,6 +80,8 @@ Three zones. Only Zone 1 runs on infrastructure we pay for, and no shopper reque
 - **D1** — shop records, offline access tokens, offer drafts, version history, cached plan state.
 - **Webhook endpoints** — `app/uninstalled` plus the three compliance topics.
 
+**Measured 2026-07-28 (Task 13):** a request doing session-token verification, one D1 read, and shell render costs **3 ms CPU median, 4 ms max** — 40% of the cap, leaving ~6 ms for feature work. The bet holds; see `docs/superpowers/plans/workers-deploy-result.md`.
+
 **Critical constraint:** Workers Free caps CPU at **10 ms per request** (CPU time only; network waits excluded). The admin app therefore serves a thin SSR shell and lets Polaris web components render client-side from Shopify's CDN, with data delivered as JSON. Heavy server-side rendering is not viable on this tier.
 
 Exceeding 100k requests/day returns Error 1027 rather than degrading. Documented escape hatches, in order of preference: Workers Paid ($5/mo), or moving only the admin app to an Oracle Cloud Always Free VM while keeping the storefront path on Workers.
