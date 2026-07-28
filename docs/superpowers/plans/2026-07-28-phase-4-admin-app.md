@@ -36,10 +36,10 @@ The template ships Node + Prisma + SQLite. None of that runs on Workers.
 
 **Files:** `wrangler.toml`, `app/db.server.ts`, `app/shopify.server.ts`, `package.json`
 
-- [ ] **Step 1:** Add `wrangler.toml` with a D1 binding. Create the production database with `wrangler d1 create cartbloom`.
-- [ ] **Step 2:** Replace Prisma with a D1-native data layer. Drizzle or hand-written SQL both work; Prisma's Workers story adds weight this budget cannot spare. Delete `prisma/`.
-- [ ] **Step 3:** Replace the session storage adapter with one backed by D1. Sessions are read on every request, so this is on the measured hot path — keep it to a single indexed query.
-- [ ] **Step 4:** Schema:
+- [x] **Step 1:** Add `wrangler.toml` with a D1 binding. Create the production database with `wrangler d1 create cartbloom`.
+- [x] **Step 2:** Replace Prisma with a D1-native data layer. Drizzle or hand-written SQL both work; Prisma's Workers story adds weight this budget cannot spare. Delete `prisma/`.
+- [x] **Step 3:** Replace the session storage adapter with one backed by D1. Sessions are read on every request, so this is on the measured hot path — keep it to a single indexed query.
+- [x] **Step 4:** Schema:
 
 ```sql
 CREATE TABLE shops (
@@ -74,7 +74,17 @@ CREATE TABLE published_versions (
 );
 ```
 
-- [ ] **Step 5:** Deploy and confirm the app loads embedded in the Shopify admin. Commit.
+- [x] **Step 5:** Deploy and confirm the app loads embedded in the Shopify admin. Commit.
+
+**Deployed:** `https://cartbloom.cartbloom.workers.dev` — 5 ms Worker startup. Routing,
+auth bounce, and HMAC rejection verified by curl. *Embedded load in the admin is
+still unverified — it needs a browser.*
+
+**Pulled forward from later tasks**, because leaving them undone would have meant
+migrating code that was going to be deleted, or shipping a config pointing at a
+route that did not exist:
+- Task 46 Step 1 — the demo routes and the shop-domain login form are gone.
+- Task 41 Step 5 — `/webhooks/compliance` exists and is declared in the TOML.
 
 ## Task 41: Managed installation and webhooks
 
@@ -84,7 +94,7 @@ Straight from the review playbook; each item is a real observed failure.
 - [ ] **Step 2:** Fresh `window.shopify.idToken()` per API request. Verify server-side: HMAC, `exp`, `aud` == client id, shop from `dest`. **Retry once on `401 invalid-session-token`** — backgrounded tabs throttle App Bridge's refresh timer.
 - [ ] **Step 3:** No cookies, no localStorage for auth. Must work in Chrome incognito with third-party cookies blocked.
 - [ ] **Step 4:** Register webhooks on **first token acquisition**, idempotent, gated by a once-per-shop flag. Never a manual script.
-- [ ] **Step 5:** Implement the three compliance topics. `shop/redact` genuinely purges every row for that shop.
+- [x] **Step 5:** Implement the three compliance topics. `shop/redact` genuinely purges every row for that shop.
 - [ ] **Step 6:** **A CI check that greps the built HTML for the real client id** and fails the build on a surviving placeholder. This failure is invisible locally and surfaces only as a rejected automated check.
 - [ ] **Step 7:** Commit.
 

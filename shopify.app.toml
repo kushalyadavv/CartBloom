@@ -2,7 +2,7 @@
 
 client_id = "ea5916404234f5396ec07877cfcd0724"
 name = "CartBloom"
-application_url = "https://example.com"
+application_url = "https://cartbloom.cartbloom.workers.dev"
 embedded = true
 
 [access_scopes]
@@ -84,8 +84,10 @@ api_version = "2026-10"
   compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [
+  "https://cartbloom.cartbloom.workers.dev/auth/callback",
+  "https://cartbloom.cartbloom.workers.dev/auth/shopify/callback",
+]
 
 [build]
-include_config_on_deploy = true
 automatically_update_urls_on_dev = true
