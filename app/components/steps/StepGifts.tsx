@@ -26,12 +26,35 @@ interface PickedVariant {
   price?: number;
 }
 
+/** What the App Bridge product picker hands back. */
+interface PickedProduct {
+  id: string;
+  title?: string;
+  images?: Array<{ originalSrc?: string; url?: string }>;
+  variants?: Array<{
+    id: string;
+    title?: string;
+    price?: string;
+    image?: { originalSrc?: string; url?: string };
+  }>;
+}
+
 /**
  * Opens the admin's own product picker.
  *
- * App Bridge provides it; there is no CartBloom UI to build and no product
- * data to cache. `read_products` is what makes it work, and it is the only
- * reason that scope is requested.
+ * `type: 'product'`, not `'variant'`. The variant picker lists every variant in
+ * the shop flat — "$10", "$25", "$50" with no indication of what they belong
+ * to — which is unusable in a catalogue of any size. The product picker groups
+ * them under their product and lets a merchant take a whole product or pick
+ * variants within it.
+ *
+ * Variant ids are still what comes back, because that is what the entitlement
+ * core and the discount function both work in: a gift is a specific variant,
+ * not a product. Selecting a whole product means every one of its variants.
+ *
+ * App Bridge provides all of this, so there is no CartBloom UI to build and no
+ * product data to cache. `read_products` is what makes it work, and it is the
+ * only reason that scope is requested.
  */
 async function pickVariants(): Promise<PickedVariant[]> {
   const bridge = (window as unknown as {
@@ -41,18 +64,38 @@ async function pickVariants(): Promise<PickedVariant[]> {
   if (!bridge?.resourcePicker) return [];
 
   const selection = (await bridge.resourcePicker({
-    type: 'variant',
+    type: 'product',
     multiple: true,
-  })) as Array<{ id: string; title?: string; image?: { originalSrc?: string }; price?: string }> | undefined;
+  })) as PickedProduct[] | undefined;
 
   if (!selection) return [];
 
-  return selection.map((v) => ({
-    id: v.id,
-    title: v.title,
-    image: v.image?.originalSrc,
-    price: v.price === undefined ? undefined : Math.round(Number(v.price) * 100),
-  }));
+  const picked: PickedVariant[] = [];
+
+  for (const product of selection) {
+    const productImage = product.images?.[0]?.originalSrc ?? product.images?.[0]?.url;
+
+    for (const variant of product.variants ?? []) {
+      // "Small / Black" alone means nothing in a gift chooser; the product name
+      // is what a shopper recognises. Publishing rebuilds this from the Admin
+      // API, but the preview needs it now.
+      const title =
+        variant.title === undefined || variant.title === 'Default Title'
+          ? product.title
+          : `${product.title} — ${variant.title}`;
+
+      picked.push({
+        id: variant.id,
+        title,
+        // The variant's own image where it has one; the product's otherwise, so
+        // a chooser is never a row of blank tiles.
+        image: variant.image?.originalSrc ?? variant.image?.url ?? productImage,
+        price: variant.price === undefined ? undefined : Math.round(Number(variant.price) * 100),
+      });
+    }
+  }
+
+  return picked;
 }
 
 export function StepGifts({ draft, update }: Props) {
