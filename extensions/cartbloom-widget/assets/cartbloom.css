@@ -70,6 +70,46 @@
   box-sizing: inherit;
 }
 
+/*
+ * The screen-reader announcement region.
+ *
+ * Visually hidden, never display:none — a hidden element is removed from the
+ * accessibility tree and announces nothing, which would defeat the point. This
+ * had no rule at all and rendered as an ordinary paragraph above the bar.
+ *
+ * Not `visibility: hidden` either, for the same reason. The clip-rect approach
+ * keeps it in the tree while giving it no visible area.
+ */
+.cb__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * Errors a shopper needs to see — "we could not update your gift".
+ *
+ * Unlike .cb__live this is visible by design, and also had no rule, so it
+ * inherited the theme's paragraph styling and read as body copy rather than a
+ * problem.
+ */
+.cb__notice {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, #d72c0d 10%, transparent);
+  color: #b42318;
+  font-size: 0.85em;
+  line-height: 1.35;
+}
+
 .cb__message {
   margin: 0 0 var(--cb-gap);
   font-size: var(--cb-message-size);
