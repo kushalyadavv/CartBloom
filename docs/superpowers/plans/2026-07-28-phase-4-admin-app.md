@@ -177,32 +177,40 @@ time.
 - [x] **Step 2:** Links to the hosted plan page. The app handle is an env var, not a literal — getting it wrong 404s the one page that takes money.
 - [x] **Step 3:** `plan_handle` on the return bypasses the cache, so a merchant who just upgraded never sees their old limits.
 - [x] **Step 4:** **Grandfather on downgrade.**
-- [ ] **Step 5:** Verify the frontend reflects the real plan — **needs a real paid subscription to test.**
+- [ ] **Step 5:** Verify the frontend reflects the real plan. **Blocked on Phase 5:**
+  the plans do not exist until they are declared in the App Store listing form,
+  so there is no subscription to read. This also settles an open question — the
+  plan is read from the Admin API's `currentAppInstallation`, where the App
+  Pricing docs point at the Partner API instead. If a subscribed shop still
+  reads as Free, that is why, and the fix is a Partner API token.
 - [ ] **Step 6:** Commit.
 
 ## Task 48: End-to-end on a dev store
 
+> **Run by Kushal on a clean dev store and reported passing.** Not witnessed
+> here, so the record is his rather than a transcript of the run.
+
 Nothing before this proves a merchant can actually use the app.
 
-- [ ] **Step 1:** Install fresh on a clean dev store. No manual metafield writes.
-- [ ] **Step 2:** Build a two-gift-tier offer entirely through the wizard.
-- [ ] **Step 3:** Publish. Confirm all three metafields are written and the discount node exists.
-- [ ] **Step 4:** On the storefront, confirm the widget renders with **real product names and images** — the thing `giftDisplays` exists for.
-- [ ] **Step 5:** Claim a gift and check out. Confirm the discount applies.
-- [ ] **Step 6:** Re-run the exploit attempts from Task 25 §Case 6. They must still bill at full price.
-- [ ] **Step 7:** Record results alongside `task-25-checkout-verification.md`. Commit.
+- [x] **Step 1:** Install fresh on a clean dev store. No manual metafield writes.
+- [x] **Step 2:** Build a two-gift-tier offer entirely through the wizard.
+- [x] **Step 3:** Publish. Confirm all three metafields are written and the discount node exists.
+- [x] **Step 4:** On the storefront, confirm the widget renders with **real product names and images** — the thing `giftDisplays` exists for.
+- [x] **Step 5:** Claim a gift and check out. Confirm the discount applies.
+- [x] **Step 6:** Re-run the exploit attempts from Task 25 §Case 6. They must still bill at full price.
+- [x] **Step 7:** Record results alongside `task-25-checkout-verification.md`. Commit.
 
 ---
 
 ## Definition of done
 
-- [ ] Runs on Workers + D1; CPU per admin request stays under the measured budget
-- [ ] Managed installation, session-token auth, idempotent webhook registration, three compliance topics
-- [ ] A merchant can build and publish an offer without touching GraphQL
-- [ ] Publish writes all three payloads atomically, with rollback
-- [ ] Storefront shows real product names and images
-- [ ] Every validation in Task 44 is enforced and explained
-- [ ] A real checkout honours a wizard-built offer, and forged claims still bill full price
+- [x] Runs on Workers + D1; CPU per admin request stays under the measured budget
+- [x] Managed installation, session-token auth, idempotent webhook registration, three compliance topics
+- [x] A merchant can build and publish an offer without touching GraphQL
+- [x] Publish writes all three payloads atomically, with rollback
+- [x] Storefront shows real product names and images
+- [x] Every validation in Task 44 is enforced and explained
+- [x] A real checkout honours a wizard-built offer, and forged claims still bill full price
 
 ## Carried into Phase 5
 
