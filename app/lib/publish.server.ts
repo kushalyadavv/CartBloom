@@ -32,14 +32,17 @@ const SHOP_QUERY = `#graphql
   }`;
 
 /**
- * Resolved without a single image field.
+ * `featuredImage`, deprecated, and chosen on purpose.
  *
- * Every way of reaching a variant's image — `image`, `media`, the product's
- * featured media — requires `read_files`, `read_orders` and more. CartBloom
- * requests `read_products` and nothing else, because staying out of Protected
- * Customer Data entirely is worth more than server-resolved thumbnails. Images
- * come from the App Bridge picker instead, which hands them over client-side at
- * the moment a merchant chooses the product.
+ * Shopify points at `featuredMedia` instead — but every media path
+ * (`variant.image`, `variant.media`, `product.featuredMedia`) requires
+ * `read_files` and `read_orders`, and requesting those would put CartBloom
+ * inside Protected Customer Data. Verified against the 2026-07 schema:
+ * `product.featuredImage` needs `read_products` alone.
+ *
+ * So the deprecation is the cheaper cost. If it is ever removed, the fallback
+ * is the image the App Bridge picker already captured client-side, which is why
+ * `resolveVariants` still prefers a known image over this one.
  */
 const VARIANTS_QUERY = `#graphql
   query CartBloomVariants($ids: [ID!]!) {
@@ -49,7 +52,7 @@ const VARIANTS_QUERY = `#graphql
         title
         price
         availableForSale
-        product { title status }
+        product { title status featuredImage { url } }
       }
     }
   }`;
@@ -121,7 +124,7 @@ export async function resolveVariants(
           title: string;
           price: string;
           availableForSale: boolean;
-          product: { title: string; status: string };
+          product: { title: string; status: string; featuredImage: { url: string } | null };
         }
       | null
     >;
@@ -143,9 +146,10 @@ export async function resolveVariants(
     displays.push({
       variantId: node.id,
       title,
-      // Kept from the picker: resolving it server-side would cost scopes that
-      // pull CartBloom into Protected Customer Data.
-      image: known.find((d) => d.variantId === node.id)?.image,
+      // The picker's image first: it is the *variant's* own, where
+      // featuredImage is the product's. A red shirt should not show the blue
+      // one in the chooser.
+      image: known.find((d) => d.variantId === node.id)?.image ?? node.product.featuredImage?.url,
       price: Math.round(Number(node.price) * 100),
     });
 

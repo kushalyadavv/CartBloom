@@ -48,6 +48,11 @@
   --cb-pad-x: 0px;
   --cb-pad-y: 0px;
 
+  /* The solid counterpart to --cb-fill, for borders, ticks and outlines that a
+     gradient cannot paint. Presets and the Design step keep the two in step. */
+  --cb-accent: var(--cb-unlocked-color);
+  --cb-claim-radius: 10px;
+
   box-sizing: border-box;
   width: 100%;
   margin: 0 0 14px;
@@ -613,14 +618,23 @@
   font-weight: 800;
 }
 
+/*
+ * The same pill as "Unlocked" on the reward card.
+ *
+ * Deliberately shares every token rather than approximating them: a merchant
+ * who restyles one status pill means both, and two pills a shade apart looks
+ * like a bug rather than a choice.
+ */
 .cb-modal__count {
-  padding: 3px 9px;
+  padding: 3px 10px;
   border-radius: 99px;
-  background: color-mix(in srgb, var(--cb-unlocked-color) 14%, transparent);
+  background: color-mix(in srgb, var(--cb-unlocked-color) 12%, transparent);
   color: var(--cb-unlocked-color);
-  font-size: 0.7em;
+  font-size: 0.68em;
   font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .cb-modal__close {
@@ -671,7 +685,7 @@
 }
 
 .cb-tile.is-selected {
-  border-color: var(--cb-unlocked-color);
+  border-color: var(--cb-accent);
 }
 
 .cb-tile__media {
@@ -704,7 +718,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--cb-unlocked-color);
+  background: var(--cb-accent);
   color: #fff;
   font-size: 0.72em;
   opacity: 0;
@@ -725,17 +739,32 @@
   border-top: 1px solid var(--cb-track);
 }
 
+/*
+ * The primary action, painted with the progress fill.
+ *
+ * `--cb-fill` may be a gradient, which is fine for a background — this is the
+ * one place the gradient reads as intentional rather than noisy. The fallback
+ * is not decoration: an unresolved token here means an invisible primary
+ * action.
+ */
 .cb-modal__claim {
-  padding: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 14px;
   border: 0;
-  border-radius: 10px;
-  /* Fallback is not decoration: an unresolved token here means an invisible
-     primary action. */
-  background: var(--cb-unlocked-color, #111);
+  border-radius: var(--cb-claim-radius);
+  background: var(--cb-fill, #111);
   color: #fff;
   font: inherit;
+  font-size: 1em;
   font-weight: 800;
   cursor: pointer;
+}
+
+.cb-modal__claim svg {
+  flex: 0 0 auto;
 }
 
 /* Disabled until something is chosen — the two-step exists so a mis-tap on a

@@ -105,15 +105,22 @@ export function progressFraction(input: RenderInput): number {
  * `currentColor` means the unlocked state costs nothing to style. They are
  * aria-hidden — the caption beside them already says what they mean.
  */
+const GIFT_PATH =
+  'M2 7h12v6a1 1 0 01-1 1H3a1 1 0 01-1-1zm-1-3h14v2H1zM7 4V2.5a1.5 1.5 0 10-1.5 1.5zm2 0h1.5A1.5 1.5 0 109 2.5z';
+
+function icon(path: string, size: number): string {
+  return `<svg viewBox="0 0 16 16" width="${size}" height="${size}" fill="currentColor" aria-hidden="true"><path d="${path}"/></svg>`;
+}
+
 function tierIcon(tier: Tier): string {
   const path =
     tier.reward === 'FREE_SHIPPING'
       ? 'M1 4h9v7H1zm9 2h3l2 2v3h-5zM3.5 13a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm8 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z'
       : tier.reward === 'GIFT'
-        ? 'M2 7h12v6a1 1 0 01-1 1H3a1 1 0 01-1-1zm-1-3h14v2H1zM7 4V2.5a1.5 1.5 0 10-1.5 1.5zm2 0h1.5A1.5 1.5 0 109 2.5z'
+        ? GIFT_PATH
         : 'M4 12l8-8M5.5 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm5 7a1.5 1.5 0 110-3 1.5 1.5 0 010 3z';
 
-  return `<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="${path}"/></svg>`;
+  return icon(path, 14);
 }
 
 function tierCaption(tier: Tier): string {
@@ -355,7 +362,8 @@ export function renderModal(
     `<button type="button" class="cb-modal__claim" data-cb-claim` +
     ` data-cb-offer="${escapeHtml(entitlement.offerId)}"` +
     ` data-cb-tier="${escapeHtml(entitlement.tierId)}"` +
-    `${selected === undefined ? ' disabled' : ''}>Claim selected gift</button>` +
+    `${selected === undefined ? ' disabled' : ''}>` +
+    `<span>Claim selected gift</span>${icon(GIFT_PATH, 16)}</button>` +
     `<button type="button" class="cb-modal__later" data-cb-dismiss>Decide later</button>` +
     `</div>` +
     `</div></div>`
@@ -392,6 +400,13 @@ const ALLOWED_TOKENS = new Set([
   'reward-status-weight',
   'pad-x',
   'pad-y',
+  // A solid colour for things a gradient cannot paint — a tile's border, the
+  // tick, an outline. `--cb-fill` may be a gradient, and `border-color:
+  // <gradient>` is invalid at computed-value time, which drops the property
+  // rather than falling back. The Design step writes this alongside `fill` so
+  // one control still drives both.
+  'accent',
+  'claim-radius',
 ]);
 
 export function tokenStyle(tokens: Record<string, string | number> | undefined): string {

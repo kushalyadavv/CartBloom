@@ -20,15 +20,17 @@ interface Props {
   update: (patch: Partial<OfferDraft>) => void;
 }
 
+/** Must match the `[data-preset]` blocks in the widget stylesheet. */
 const PRESETS = [
   { value: 'candy', label: 'Candy — bright and playful' },
-  { value: 'mono', label: 'Mono — matches a minimal theme' },
-  { value: 'forest', label: 'Forest — deep greens' },
-  { value: 'sunset', label: 'Sunset — warm oranges' },
+  { value: 'levelup', label: 'Level up — greens' },
+  { value: 'cool', label: 'Cool — indigo' },
+  { value: 'quiet', label: 'Quiet — minimal, no shimmer' },
+  { value: 'theme-match', label: 'Match my theme' },
 ];
 
 const COLOUR_TOKENS = [
-  { key: 'fill', label: 'Progress fill' },
+  { key: 'fill', label: 'Progress fill & buttons' },
   { key: 'track', label: 'Track' },
   { key: 'unlocked-color', label: 'Unlocked' },
   { key: 'locked-color', label: 'Locked' },
@@ -82,6 +84,16 @@ export function StepDesign({ draft, update }: Props) {
         // would emit `--cb-fill:` and break the declaration it sits in.
         if (value === '') delete tokens[key];
         else tokens[key] = value;
+
+        // The fill colour also drives the solid accent — the selected tile's
+        // border, its tick, the focus ring. Those cannot take a gradient, so
+        // they read a separate token; keeping the two in step here means the
+        // merchant sets one colour and everything follows.
+        if (key === 'fill') {
+          if (value === '') delete tokens.accent;
+          else tokens.accent = value;
+        }
+
         update({ design: { ...draft.design, tokens } });
       }
     },
@@ -183,6 +195,17 @@ export function StepDesign({ draft, update }: Props) {
           <s-grid-item>{choice('pad-x', 'Left and right', SPACING)}</s-grid-item>
           <s-grid-item>{choice('pad-y', 'Top and bottom', SPACING)}</s-grid-item>
         </s-grid>
+
+        <s-divider />
+        <s-heading>Buttons</s-heading>
+
+        {choice('claim-radius', 'Corner radius', [
+          { value: '', label: 'Default' },
+          { value: '0px', label: 'Square' },
+          { value: '6px', label: 'Slightly rounded' },
+          { value: '14px', label: 'Rounded' },
+          { value: '999px', label: 'Pill' },
+        ])}
 
         <s-divider />
         <s-heading>Colours</s-heading>

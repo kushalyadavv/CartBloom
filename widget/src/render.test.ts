@@ -243,3 +243,51 @@ describe('renderModal', () => {
     expect(html).not.toContain('<img src=x');
   });
 });
+
+describe('renderModal', () => {
+  const pool = {
+    offerId: 'o1',
+    tierId: 't1',
+    candidates: [{ variantId: 'v1' }, { variantId: 'v2' }, { variantId: 'v3' }],
+  };
+
+  it('counts the real pool rather than a fixed number', () => {
+    expect(renderModal(pool, undefined, [])).toContain('3 total');
+    expect(
+      renderModal({ ...pool, candidates: [{ variantId: 'v1' }] }, undefined, [])
+    ).toContain('1 total');
+  });
+
+  it('shows a product image once one has been resolved', () => {
+    const html = renderModal(pool, undefined, [
+      { variantId: 'v1', title: 'Tote', image: 'https://cdn/tote.jpg' },
+    ]);
+    expect(html).toContain('src="https://cdn/tote.jpg"');
+    // The other two have none yet, so they stay neutral rather than broken.
+    expect(html).toContain('cb-tile__media--blank');
+  });
+
+  it('carries the gift mark on the claim button, as the rail does', () => {
+    const html = renderModal(pool, 'v1', []);
+    const foot = html.slice(html.indexOf('cb-modal__claim'));
+    expect(foot).toContain('<svg');
+    expect(foot).toContain('Claim selected gift');
+  });
+
+  it('disables claiming until something is chosen', () => {
+    expect(renderModal(pool, undefined, [])).toContain('disabled');
+    expect(renderModal(pool, 'v1', [])).not.toContain('disabled');
+  });
+});
+
+describe('design tokens', () => {
+  it('accepts the accent and radius the modal needs', () => {
+    const style = tokenStyle({ accent: '#ff0088', 'claim-radius': '999px' });
+    expect(style).toContain('--cb-accent:#ff0088');
+    expect(style).toContain('--cb-claim-radius:999px');
+  });
+
+  it('still drops anything outside the allowlist', () => {
+    expect(tokenStyle({ 'background-image': 'url(evil)' })).toBe('');
+  });
+});
