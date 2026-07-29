@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LoaderFunctionArgs } from 'react-router';
-import { useLoaderData, useSearchParams } from 'react-router';
+import { useLoaderData, useRevalidator, useSearchParams } from 'react-router';
 
 import { getOffer, getShop } from '../db.server';
 import { authenticatedFetch } from '../lib/authenticated-fetch';
@@ -59,9 +59,19 @@ const STEP_LABELS: Record<WizardStep, string> = {
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
+interface PublishResult {
+  ok: boolean;
+  version?: string;
+  errors?: string[];
+  warnings?: string[];
+  /** Gifts dropped because Shopify no longer knows the variant. */
+  droppedVariants?: string[];
+}
+
 export default function OfferWizard() {
   const { offer, status, plan } = useLoaderData<typeof loader>();
   const [params, setParams] = useSearchParams();
+  const revalidator = useRevalidator();
   const [draft, setDraft] = useState<OfferDraft>(offer);
   const [saveState, setSaveState] = useState<SaveState>('idle');
 
@@ -99,6 +109,28 @@ export default function OfferWizard() {
     setDraft((current) => ({ ...current, ...patch }));
   }, []);
 
+  const [publishing, setPublishing] = useState(false);
+  const [result, setResult] = useState<PublishResult | null>(null);
+
+  const publish = async () => {
+    setPublishing(true);
+    setResult(null);
+    try {
+      const response = await authenticatedFetch(`/app/api/offers/${draft.id}/publish`, {
+        method: 'POST',
+      });
+      const body = (await response.json()) as PublishResult;
+      setResult(body);
+      // Reload so the status badge and the offers list reflect what was
+      // actually written, rather than what the client hoped would be.
+      if (body.ok) revalidator.revalidate();
+    } catch {
+      setResult({ ok: false, errors: ['Could not reach the server. Check your connection and try again.'] });
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const goTo = (next: WizardStep) => {
     params.set('step', next);
     setParams(params, { replace: true });
@@ -129,6 +161,7 @@ export default function OfferWizard() {
             {step === 'design' && <StepDesign draft={draft} update={update} />}
             {step === 'placement' && <StepPlacement draft={draft} update={update} />}
             {step === 'review' && <StepReview draft={draft} issues={issues} />}
+            {step === 'review' && <PublishOutcome result={result} />}
 
             <s-divider />
 
@@ -144,7 +177,12 @@ export default function OfferWizard() {
                 </s-button>
               )}
               {step === 'review' && (
-                <s-button variant="primary" disabled={blocking.length > 0 || undefined}>
+                <s-button
+                  variant="primary"
+                  disabled={blocking.length > 0 || publishing || undefined}
+                  loading={publishing || undefined}
+                  onClick={publish}
+                >
                   Publish
                 </s-button>
               )}
@@ -157,6 +195,46 @@ export default function OfferWizard() {
         </s-grid-item>
       </s-grid>
     </s-page>
+  );
+}
+
+/**
+ * What publishing did.
+ *
+ * Shown rather than swallowed: a merchant who clicks Publish and sees nothing
+ * cannot tell a validation failure from an outage, and will click again.
+ */
+function PublishOutcome({ result }: { result: PublishResult | null }) {
+  if (result === null) return null;
+
+  if (result.ok) {
+    return (
+      <s-stack gap="small">
+        <s-banner tone="success" heading="Published">
+          {`This offer is live on your storefront. Version ${result.version ?? ''}.`}
+        </s-banner>
+        {(result.droppedVariants ?? []).length > 0 && (
+          <s-banner tone="warning">
+            {`${result.droppedVariants!.length} gift product no longer exists in your catalogue and was removed from this offer.`}
+          </s-banner>
+        )}
+        {(result.warnings ?? []).map((warning, i) => (
+          <s-banner key={i} tone="warning">
+            {warning}
+          </s-banner>
+        ))}
+      </s-stack>
+    );
+  }
+
+  return (
+    <s-banner tone="critical" heading="Not published">
+      <s-unordered-list>
+        {(result.errors ?? ['Publishing failed.']).map((error, i) => (
+          <s-list-item key={i}>{error}</s-list-item>
+        ))}
+      </s-unordered-list>
+    </s-banner>
   );
 }
 
