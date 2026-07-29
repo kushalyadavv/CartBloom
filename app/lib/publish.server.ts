@@ -9,7 +9,10 @@
  * from memory.
  */
 
+import type { D1Database } from '@cloudflare/workers-types';
 import type { AdminApiContext } from '@shopify/shopify-app-react-router/server';
+
+import { recordPublish } from '../db.server';
 
 import { compile, type CompiledPublish } from './compile';
 import type { GiftDisplay, OfferDraft } from './offer-draft';
@@ -311,3 +314,37 @@ export async function writeWidgetConfig(
 
 export { compile };
 export type { CompiledPublish, OfferDraft };
+
+/**
+ * Rewrite the storefront payloads from whatever is currently published.
+ *
+ * Pausing an offer only flips a row in D1. Without this the storefront would
+ * keep running it until something else republished, which makes "Deactivate" a
+ * lie — the worst kind of bug in a merchant-facing control, because nothing
+ * appears to fail.
+ *
+ * Deliberately does not re-resolve variants or re-run the publish checks. Every
+ * offer here passed both when it was published, and a merchant pausing a
+ * different offer should not be blocked because this one's gift went out of
+ * stock in the meantime.
+ */
+export async function syncStorefront(
+  admin: Admin,
+  db: D1Database,
+  shop: string,
+  drafts: OfferDraft[],
+  existingDiscountNodeId: string | null
+): Promise<{ version: string; discountNodeId: string }> {
+  const shopInfo = await getShopInfo(admin);
+  const compiled = compile(drafts, shopInfo.moneyFormat, shopInfo.currency);
+
+  const discountNodeId = await ensureDiscountNode(admin, existingDiscountNodeId, compiled);
+  await writeWidgetConfig(admin, shopInfo.id, compiled);
+  await recordPublish(db, shop, compiled.version, {
+    compact: compiled.compact,
+    inputVariables: compiled.inputVariables,
+    widget: compiled.widget,
+  });
+
+  return { version: compiled.version, discountNodeId };
+}
