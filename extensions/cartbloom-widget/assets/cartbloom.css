@@ -577,10 +577,26 @@
   padding: 16px;
 }
 
+/*
+ * Blurred, and lighter than it would otherwise be.
+ *
+ * The blur is what separates the chooser from the page behind it; with it, the
+ * scrim can drop to 0.32 and the store still reads as present rather than
+ * switched off. Where backdrop-filter is unsupported the scrim alone carries
+ * the separation, so it is declared first and unconditionally.
+ */
 .cb-modal__backdrop {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .cb-modal__backdrop {
+    background: rgba(0, 0, 0, 0.32);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
 }
 
 .cb-modal__panel {

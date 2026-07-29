@@ -319,11 +319,22 @@ export function renderRewards(cards: string[]): string {
  * the shopper acts, so closing without choosing has to be an obvious, named
  * option rather than only an X in the corner.
  */
+/**
+ * The gift chooser.
+ *
+ * `tokens` is not optional decoration. The modal is portalled to <body> to
+ * escape the drawer's stacking and overflow contexts, which puts it outside
+ * `.cb` — so it inherits nothing from the widget's own style attribute, where
+ * every merchant override lives. Without this it renders in the preset's
+ * colours while the widget beside it renders in the merchant's, and the two
+ * look like different apps.
+ */
 export function renderModal(
   entitlement: { offerId: string; tierId: string; candidates: Array<{ variantId: string }> },
   selected: string | undefined,
   displays: GiftDisplay[] = [],
-  preset = 'candy'
+  preset = 'candy',
+  tokens?: Record<string, string | number>
 ): string {
   const tiles = entitlement.candidates
     .map((candidate) => {
@@ -347,8 +358,12 @@ export function renderModal(
     })
     .join('');
 
+  const style = tokenStyle(tokens);
+
   return (
-    `<div class="cb-modal" data-preset="${escapeHtml(preset)}" role="dialog" aria-modal="true"` +
+    `<div class="cb-modal" data-preset="${escapeHtml(preset)}"` +
+    (style === '' ? '' : ` style="${style}"`) +
+    ` role="dialog" aria-modal="true"` +
     ` aria-label="Select your free gift" data-cb-modal>` +
     `<div class="cb-modal__backdrop" data-cb-dismiss></div>` +
     `<div class="cb-modal__panel">` +

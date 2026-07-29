@@ -291,3 +291,22 @@ describe('design tokens', () => {
     expect(tokenStyle({ 'background-image': 'url(evil)' })).toBe('');
   });
 });
+
+describe('renderModal token isolation', () => {
+  const pool = { offerId: 'o1', tierId: 't1', candidates: [{ variantId: 'v1' }] };
+
+  it('carries the merchant overrides inline, since it renders outside .cb', () => {
+    const html = renderModal(pool, undefined, [], 'candy', { fill: '#22aa55', accent: '#22aa55' });
+    expect(html).toContain('--cb-fill:#22aa55');
+    expect(html).toContain('--cb-accent:#22aa55');
+  });
+
+  it('omits the attribute entirely when there is nothing to override', () => {
+    expect(renderModal(pool, undefined, [], 'candy')).not.toContain('style="');
+  });
+
+  it('still filters the overrides it is handed', () => {
+    const html = renderModal(pool, undefined, [], 'candy', { 'background-image': 'url(evil)' });
+    expect(html).not.toContain('evil');
+  });
+});

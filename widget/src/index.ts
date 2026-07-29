@@ -278,7 +278,15 @@ function boot(): void {
     }
 
     const offer = config.offers.find((o) => o.id === modal!.offerId);
-    modalLayer.innerHTML = renderModal(ent, modal.selected, offer?.giftDisplays, offer?.design?.preset);
+    modalLayer.innerHTML = renderModal(
+      ent,
+      modal.selected,
+      offer?.giftDisplays,
+      offer?.design?.preset,
+      // The modal lives outside .cb, so the merchant's overrides have to be
+      // handed to it explicitly rather than inherited.
+      offer?.design?.tokens
+    );
     if (!modalLayer.isConnected) document.body.appendChild(modalLayer);
     modalLayer.querySelector<HTMLElement>('[data-cb-pick], .cb-modal__close')?.focus();
   };
