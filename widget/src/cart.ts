@@ -27,6 +27,8 @@ export interface AjaxCartLine {
 }
 
 export interface AjaxCart {
+  /** Presentment currency code — differs from the shop default under Markets. */
+  currency?: string;
   items: AjaxCartLine[];
   item_count: number;
 }

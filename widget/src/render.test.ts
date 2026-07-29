@@ -318,3 +318,35 @@ describe('renderModal token isolation', () => {
     expect(html).not.toContain('evil');
   });
 });
+
+describe('formatMoney under Shopify Markets', () => {
+  const fmt = '${{amount}}';
+
+  it("uses the shop's own format when the shopper pays in the shop's currency", () => {
+    expect(formatMoney(1050, fmt, { cart: 'USD', shop: 'USD' })).toBe('$10.50');
+  });
+
+  it('abandons the format when the cart is in another currency', () => {
+    // The amount from /cart.js is already presentment; only the symbol would be
+    // wrong, and "$644" for a dirham cart is worse than losing the template.
+    const out = formatMoney(64400, fmt, { cart: 'AED', shop: 'USD' });
+    expect(out).not.toContain('$');
+    expect(out).toContain('644');
+  });
+
+  it('renders an unrecognised but well-formed code rather than a wrong symbol', () => {
+    // Intl accepts any three-letter code and uses it as the symbol. Shopify
+    // only ever sends real codes, and showing "ZZZ 10.50" still beats showing
+    // the shop's dollar sign against another currency's amount.
+    expect(formatMoney(1050, fmt, { cart: 'ZZZ', shop: 'USD' })).toContain('10.50');
+  });
+
+  it("falls back to the shop's format when the code is malformed", () => {
+    // Intl throws on these; the catch is what stops a blank price.
+    expect(formatMoney(1050, fmt, { cart: 'US', shop: 'USD' })).toBe('$10.50');
+  });
+
+  it('behaves as before when no currency is known at all', () => {
+    expect(formatMoney(1050, fmt)).toBe('$10.50');
+  });
+});

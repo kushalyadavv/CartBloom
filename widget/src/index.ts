@@ -37,6 +37,8 @@ interface WidgetConfig {
   v: number;
   offers: OfferWithExtras[];
   moneyFormat?: string;
+  /** The shop's default currency, for comparison against the cart's. */
+  currency?: string;
   routes?: CartRoutes;
 }
 
@@ -177,6 +179,7 @@ function boot(): void {
           offer: offer as RenderOffer,
           entitlements: ent,
           moneyFormat: config.moneyFormat,
+          currency: { cart: cart.currency, shop: config.currency },
           extra: choosers,
         });
 

@@ -76,7 +76,7 @@ export const action = async ({ request, params, context }: ActionFunctionArgs) =
       .map((o) => o.config as OfferDraft);
 
     const activeDrafts = [...others, live];
-    const compiled = compile(activeDrafts, shopInfo.moneyFormat);
+    const compiled = compile(activeDrafts, shopInfo.moneyFormat, shopInfo.currency);
 
     // 3. Check. Nothing has been written yet.
     const check = checkPublish(live, {

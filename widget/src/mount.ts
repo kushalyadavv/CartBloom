@@ -158,6 +158,11 @@ export function findDrawerMount(root: ParentNode = document): MountResult {
 
   const header = firstMatch(panel, INSERTION_HINTS);
   if (header !== null) {
+    // Tagged so the stylesheet can order the header above the widget without
+    // guessing which sibling it is. Ordering every preceding sibling ahead of
+    // the host also caught the empty-cart region, which dropped the widget to
+    // the bottom of an empty drawer.
+    header.setAttribute('data-cartbloom-header', '');
     return { host: ensureHost(header.parentElement ?? panel, header), reason: isStandard ? 'standard' : 'theme-selector' };
   }
 

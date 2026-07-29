@@ -28,7 +28,7 @@ const FUNCTIONS_QUERY = `#graphql
 
 const SHOP_QUERY = `#graphql
   query CartBloomShop {
-    shop { id currencyFormats { moneyFormat } }
+    shop { id currencyCode currencyFormats { moneyFormat } }
   }`;
 
 /**
@@ -167,12 +167,20 @@ export async function resolveVariants(
   };
 }
 
-export async function getShopInfo(admin: Admin): Promise<{ id: string; moneyFormat: string }> {
-  const data = await gql<{ shop: { id: string; currencyFormats: { moneyFormat: string } } }>(
-    admin,
-    SHOP_QUERY
-  );
-  return { id: data.shop.id, moneyFormat: data.shop.currencyFormats.moneyFormat };
+export async function getShopInfo(
+  admin: Admin
+): Promise<{ id: string; moneyFormat: string; currency: string }> {
+  const data = await gql<{
+    shop: { id: string; currencyCode: string; currencyFormats: { moneyFormat: string } };
+  }>(admin, SHOP_QUERY);
+
+  return {
+    id: data.shop.id,
+    moneyFormat: data.shop.currencyFormats.moneyFormat,
+    // Published so the widget can tell "the shopper is paying in our currency"
+    // from "they are not" — the money format is only right in the first case.
+    currency: data.shop.currencyCode,
+  };
 }
 
 export async function getDiscountFunctionId(admin: Admin): Promise<string> {

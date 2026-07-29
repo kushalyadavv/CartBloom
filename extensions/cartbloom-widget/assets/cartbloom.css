@@ -416,12 +416,14 @@
  * still be laid out after it. Hence order: -1.
  *
  * On its own that also hoisted the widget above the drawer's own heading, which
- * has to stay first. So anything the host follows in the DOM is pulled ahead of
- * it: `:has(~ [data-cartbloom-host])` matches exactly the siblings that precede
- * our host, which is the header and nothing else. The relationship is required,
- * so this cannot reorder a theme element that has nothing to do with us.
+ * has to stay first — so the header is pulled ahead of it.
+ *
+ * The header is tagged by the mount code rather than matched structurally. The
+ * structural version, `:has(~ [data-cartbloom-host])`, ordered *every*
+ * preceding sibling ahead of the host, which on an empty cart caught the
+ * empty-state region and dropped the widget to the bottom of the drawer.
  */
-:has(~ [data-cartbloom-host]) {
+[data-cartbloom-header] {
   order: -2;
 }
 
@@ -469,7 +471,7 @@
   border-radius: 99px;
   background: color-mix(in srgb, var(--cb-unlocked-color) 12%, transparent);
   color: var(--cb-unlocked-color);
-  font-size: 0.68em;
+  font-size: 0.6em;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;

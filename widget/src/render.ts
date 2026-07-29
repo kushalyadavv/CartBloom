@@ -23,6 +23,8 @@ export interface RenderInput {
   offer: RenderOffer;
   entitlements: OfferEntitlements;
   moneyFormat?: string;
+  /** Cart and shop currency codes; they differ under Shopify Markets. */
+  currency?: { cart?: string; shop?: string };
   /**
    * Markup appended inside `.cb`, after the tiers — the choosers.
    *
@@ -35,7 +37,37 @@ export interface RenderInput {
 }
 
 /** Minor units to a display string, using the shop's own money format. */
-export function formatMoney(minorUnits: number, moneyFormat?: string): string {
+/**
+ * Minor units to a display string.
+ *
+ * `moneyFormat` is the shop's own Liquid template, resolved at publish, and is
+ * what a merchant expects to see. It is only correct while the shopper is
+ * paying in the shop's default currency.
+ *
+ * Under Shopify Markets they may not be. `/cart.js` already returns amounts in
+ * the presentment currency, so the numbers are right and only the symbol would
+ * be wrong — a cart in dirhams rendered as "$644". When the cart reports a
+ * different currency than the shop's, the format template is abandoned for
+ * `Intl.NumberFormat`, which gets the symbol, placement and separators right
+ * for that locale. Losing the merchant's exact styling is the smaller error.
+ */
+export function formatMoney(
+  minorUnits: number,
+  moneyFormat?: string,
+  currency?: { cart?: string; shop?: string }
+): string {
+  const cartCurrency = currency?.cart;
+  if (cartCurrency !== undefined && cartCurrency !== currency?.shop) {
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: cartCurrency,
+      }).format(minorUnits / 100);
+    } catch {
+      // An unknown code is not worth a blank price.
+    }
+  }
+
   const amount = (minorUnits / 100).toFixed(2);
   if (moneyFormat === undefined) return `$${amount}`;
   // Shopify money formats use {{amount}} and relatives. Only the common cases
@@ -68,7 +100,7 @@ function sortedTiers(offer: RenderOffer): Tier[] {
  * instead — a bar that says "spend $0.00 more" reads as broken.
  */
 export function progressMessage(input: RenderInput): string {
-  const { offer, entitlements, moneyFormat } = input;
+  const { offer, entitlements, moneyFormat, currency } = input;
   const tiers = sortedTiers(offer);
   const next = tiers.find((t) => !entitlements.unlockedTierIds.includes(t.id));
 
@@ -80,7 +112,7 @@ export function progressMessage(input: RenderInput): string {
   const amount =
     offer.trigger === 'QUANTITY'
       ? `${remaining} ${remaining === 1 ? 'item' : 'items'}`
-      : formatMoney(remaining, moneyFormat);
+      : formatMoney(remaining, moneyFormat, currency);
 
   const template =
     entitlements.unlockedTierIds.length > 0
@@ -147,7 +179,7 @@ function tierCaption(tier: Tier): string {
  * "12000 of 15000" is meaningless without the currency.
  */
 export function renderOffer(input: RenderInput): string {
-  const { offer, entitlements, moneyFormat } = input;
+  const { offer, entitlements, moneyFormat, currency } = input;
   const layout = offer.design?.layout ?? 'BAR';
   const preset = offer.design?.preset ?? 'candy';
   const tiers = sortedTiers(offer);
