@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   compile,
   compileInputVariables,
+  discountClassesFor,
   compileWidgetConfig,
   toFunctionOffer,
   versionHash,
@@ -137,5 +138,60 @@ describe('compile', () => {
     const compiled = compile([giftDraft()]);
     expect(() => JSON.parse(compiled.compactJson)).not.toThrow();
     expect(JSON.parse(compiled.compactJson).o).toHaveLength(1);
+  });
+});
+
+describe('discountClassesFor', () => {
+  const tier = (reward: OfferDraft['tiers'][number]['reward'], threshold: number) => ({
+    id: `t${threshold}`,
+    threshold,
+    reward,
+    giftPool:
+      reward === 'GIFT'
+        ? [{ variantId: 'v1', discountType: 'FREE' as const, value: 0, maxQty: 1 }]
+        : [],
+  });
+
+  const withTiers = (...rewards: Array<OfferDraft['tiers'][number]['reward']>): OfferDraft => {
+    const d = newDraft('o1');
+    d.tiers = rewards.map((r, i) => tier(r, (i + 1) * 1000));
+    return d;
+  };
+
+  it('maps each reward onto the class the function returns it as', () => {
+    expect(discountClassesFor([withTiers('FREE_SHIPPING')])).toEqual(['SHIPPING']);
+    expect(discountClassesFor([withTiers('GIFT')])).toEqual(['PRODUCT']);
+    expect(discountClassesFor([withTiers('ORDER_PERCENT')])).toEqual(['ORDER']);
+    expect(discountClassesFor([withTiers('ORDER_FIXED')])).toEqual(['ORDER']);
+  });
+
+  it('declares only what is used, since the list changes how discounts combine', () => {
+    expect(discountClassesFor([withTiers('GIFT', 'GIFT')])).toEqual(['PRODUCT']);
+  });
+
+  it('unions across every active offer, because one node serves them all', () => {
+    const shipping = withTiers('FREE_SHIPPING');
+    const gifts = withTiers('GIFT');
+    expect(discountClassesFor([shipping, gifts])).toEqual(['PRODUCT', 'SHIPPING']);
+  });
+
+  it('covers all three when an offer awards all three', () => {
+    expect(discountClassesFor([withTiers('FREE_SHIPPING', 'ORDER_PERCENT', 'GIFT')])).toEqual([
+      'ORDER',
+      'PRODUCT',
+      'SHIPPING',
+    ]);
+  });
+
+  it('never returns an empty list, which would reject every discount', () => {
+    const d = newDraft('o1');
+    d.tiers = [];
+    expect(discountClassesFor([d])).toEqual(['PRODUCT']);
+  });
+
+  it('is part of the version, so changing it republishes', () => {
+    const shipping = withTiers('FREE_SHIPPING');
+    const gift = withTiers('GIFT');
+    expect(compile([shipping]).version).not.toBe(compile([gift]).version);
   });
 });

@@ -237,7 +237,11 @@ export async function ensureDiscountNode(
       };
     }>(admin, DISCOUNT_UPDATE, {
       id: existingId,
-      discount: { title: 'CartBloom rewards', metafields },
+      discount: {
+        title: 'CartBloom rewards',
+        discountClasses: compiled.discountClasses,
+        metafields,
+      },
     });
 
     throwOnUserErrors(data.discountAutomaticAppUpdate.userErrors, 'Could not update the discount');
@@ -258,6 +262,9 @@ export async function ensureDiscountNode(
     discount: {
       title: 'CartBloom rewards',
       functionId,
+      // Mandatory for functions on the `discounts` API type. Derived from what
+      // the live offers award; see discountClassesFor.
+      discountClasses: compiled.discountClasses,
       startsAt: new Date().toISOString(),
       metafields,
     },
