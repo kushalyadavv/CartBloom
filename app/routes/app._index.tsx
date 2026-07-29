@@ -139,23 +139,31 @@ export default function Dashboard() {
           </s-paragraph>
         </s-section>
       ) : (
-        // auto-fill rather than a fixed two columns: a single offer filled half
-        // a row and left the other half empty, which read as something missing.
-        <s-grid gridTemplateColumns="repeat(auto-fill, minmax(320px, 1fr))" gap="base">
-          {offers.map((offer) => (
-            <s-grid-item key={offer.id}>
-              <OfferCard
-                offer={offer}
-                busy={busy === offer.id}
-                onOpen={() => navigate(`/app/offers/${offer.id}?step=trigger`)}
-                onToggle={() =>
-                  setStatus(offer.id, offer.status === 'PUBLISHED' ? 'PAUSED' : 'PUBLISHED')
-                }
-                onDelete={() => remove(offer.id, offer.name)}
-              />
-            </s-grid-item>
-          ))}
-        </s-grid>
+        // A section so the page spaces this from the banner below, and a
+        // tinted box so the cards sit on something rather than floating on the
+        // page background.
+        <s-section>
+          <s-box background="subdued" padding="base" borderRadius="base">
+            {/* auto-fill rather than fixed columns: a single offer filled half a
+                row and left the other half empty, which read as something
+                missing. */}
+            <s-grid gridTemplateColumns="repeat(auto-fill, minmax(320px, 1fr))" gap="base">
+              {offers.map((offer) => (
+                <s-grid-item key={offer.id}>
+                  <OfferCard
+                    offer={offer}
+                    busy={busy === offer.id}
+                    onOpen={() => navigate(`/app/offers/${offer.id}?step=trigger`)}
+                    onToggle={() =>
+                      setStatus(offer.id, offer.status === 'PUBLISHED' ? 'PAUSED' : 'PUBLISHED')
+                    }
+                    onDelete={() => remove(offer.id, offer.name)}
+                  />
+                </s-grid-item>
+              ))}
+            </s-grid>
+          </s-box>
+        </s-section>
       )}
 
       {live >= caps.activeOffers && offers.length > 0 && (
@@ -185,14 +193,23 @@ function OfferCard({
   const live = offer.status === 'PUBLISHED';
   const paused = offer.status === 'PAUSED';
 
+  /*
+   * Status as colour, not only as a word.
+   *
+   * Polaris `background` only offers subdued/base/strong — no tones — so the
+   * accent is an inline rule. Explicit hex rather than a Polaris custom
+   * property: guessing at token names that may not resolve would leave an
+   * invisible strip, and these three read correctly on both admin themes.
+   */
+  const accent = live ? '#29845A' : paused ? '#B98900' : '#8A8A8A';
+
   return (
-    <s-box
-      padding="base"
-      borderWidth="base"
-      borderRadius="base"
-      background={live ? 'subdued' : undefined}
-    >
+    <s-box padding="base" borderWidth="base" borderRadius="base" background="base">
       <s-stack gap="base">
+        <div
+          aria-hidden="true"
+          style={{ height: 4, borderRadius: 999, background: accent }}
+        />
         <s-stack direction="inline" gap="small" justifyContent="space-between" alignItems="center">
           <s-badge tone={live ? 'success' : paused ? 'caution' : 'neutral'}>
             {live ? 'Live' : paused ? 'Paused' : 'Draft'}
