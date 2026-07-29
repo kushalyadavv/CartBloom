@@ -123,9 +123,26 @@ describe('renderOffer', () => {
     expect(html).toContain('cb-tier is-unlocked');
   });
 
-  it('labels a multi-product pool as a choice', () => {
+  it('names the reward under each marker rather than the threshold', () => {
     const html = renderOffer({ offer, entitlements: entitlements(0, []) });
-    expect(html).toContain('Pick a gift');
+    expect(html).toContain('Free gift');
+    // The amount still needed is stated once, above the bar. Repeating it under
+    // every marker crowded the row at drawer widths.
+    expect(html).not.toContain('cb-tier__label');
+  });
+
+  it('does not call a discounted gift free', () => {
+    const discounted: RenderOffer = {
+      ...offer,
+      tiers: offer.tiers.map((t) =>
+        t.reward === 'GIFT'
+          ? { ...t, giftPool: t.giftPool.map((g) => ({ ...g, discountType: 'PERCENT' as const, value: 50 })) }
+          : t
+      ),
+    };
+    const html = renderOffer({ offer: discounted, entitlements: entitlements(0, []) });
+    expect(html).not.toContain('Free gift');
+    expect(html).toContain('Gift');
   });
 
   it('gives each tier an icon for its reward type', () => {
@@ -176,14 +193,15 @@ const pool = {
 };
 
 describe('renderRewardCard', () => {
-  it('offers a way in rather than the choices themselves', () => {
+  it('makes the whole card the control, not a button inside it', () => {
     const html = renderRewardCard(pool, undefined, []);
+    expect(html.startsWith('<button')).toBe(true);
     expect(html).toContain('data-cb-open');
-    expect(html).toContain('Select free gift');
+    expect(html).toContain('Select');
   });
 
   it('changes the call to action once something is chosen', () => {
-    expect(renderRewardCard(pool, 'v1', [])).toContain('Change gift');
+    expect(renderRewardCard(pool, 'v1', [])).toContain('Change');
   });
 
   it('names the chosen gift when display data exists', () => {

@@ -18,7 +18,7 @@ import {
 } from '../../app/entitlement';
 import { onCartChange, fetchCart, refreshCartSections, applySections, sectionsToRequest, type AjaxCart, type AjaxCartLine } from './cart';
 import { keepMounted, findDrawerMount, type MountResult } from './mount';
-import { renderOffer, renderRewardCard, renderModal, tokenStyle, type RenderOffer, type GiftDisplay } from './render';
+import { renderOffer, renderRewardCard, renderRewards, renderModal, type RenderOffer, type GiftDisplay } from './render';
 import { MutationQueue, addGift, removeLine, swapGift, type CartRoutes } from './mutate';
 import { reconcile, removalMessage, selectedVariant, type ClaimedLine } from './claim';
 import { lineInScope, canRenderOffer, type ResolvedScope } from './scope';
@@ -170,13 +170,8 @@ function boot(): void {
             renderRewardCard(g, selectedVariant(claimed, offer.id, g.tierId), offer.giftDisplays)
           );
 
-        // Two or more rewards become a snap carousel. Stacked vertically in a
-        // drawer, the second card falls below the fold and a shopper never
-        // learns it exists; a peeking edge is what says "there is more".
-        const choosers =
-          cards.length > 1
-            ? `<div class="cb-rewards" role="group" aria-label="Available rewards" tabindex="0">${cards.join('')}</div>`
-            : cards.join('');
+        // One header above the cards; renderRewards owns the carousel.
+        const choosers = renderRewards(cards);
 
         const markup = renderOffer({
           offer: offer as RenderOffer,

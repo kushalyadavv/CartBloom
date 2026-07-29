@@ -59,18 +59,22 @@ describe('previewMarkup', () => {
     expect(at(20000)).toBe(3);
   });
 
-  it('shows one reward card without the carousel wrapper', () => {
-    const d = giftDraft();
-    const html = previewMarkup(d, 10000);
+  it('shows one reward card without the scrolling track', () => {
+    const html = previewMarkup(giftDraft(), 10000);
     expect(html).toContain('cb-reward');
-    expect(html).not.toContain('cb-rewards');
+    // The header block always wraps; only the scroller is conditional.
+    expect(html).not.toContain('cb-rewards__track');
   });
 
   it('wraps two or more reward cards in the carousel, as the widget does', () => {
-    const d = giftDraft();
-    const html = previewMarkup(d, 20000);
-    expect(html).toContain('cb-rewards');
+    const html = previewMarkup(giftDraft(), 20000);
+    expect(html).toContain('cb-rewards__track');
     expect(html).toContain('aria-label="Available rewards"');
+  });
+
+  it('names the decision once, however many cards follow', () => {
+    const html = previewMarkup(giftDraft(), 20000);
+    expect(html.match(/cb-reward__head/g) ?? []).toHaveLength(1);
   });
 
   it('never leaks a raw variant GID into the markup a merchant looks at', () => {

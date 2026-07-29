@@ -98,12 +98,6 @@ export function progressFraction(input: RenderInput): number {
   return Math.min(1, Math.max(0, input.entitlements.measure / top.threshold));
 }
 
-function tierLabel(tier: Tier, moneyFormat: string | undefined, trigger: Offer['trigger']): string {
-  return trigger === 'QUANTITY'
-    ? `${tier.threshold}`
-    : formatMoney(tier.threshold, moneyFormat);
-}
-
 /**
  * A glyph per reward type, so the ladder reads at a glance.
  *
@@ -131,7 +125,9 @@ function tierCaption(tier: Tier): string {
     case 'ORDER_FIXED':
       return 'Order discount';
     case 'GIFT':
-      return tier.giftPool.length > 1 ? 'Pick a gift' : 'Free gift';
+      // "Free gift" only when it genuinely is free — a pool priced at 50% off
+      // that announced itself as free would be a promise the cart breaks.
+      return tier.giftPool.every((g) => g.discountType === 'FREE') ? 'Free gift' : 'Gift';
   }
 }
 
@@ -159,7 +155,9 @@ export function renderOffer(input: RenderInput): string {
       return (
         `<li class="cb-tier${unlocked ? ' is-unlocked' : ''}" style="--cb-at:${(at * 100).toFixed(2)}%">` +
         `<span class="cb-tier__dot" aria-hidden="true">${tierIcon(tier)}</span>` +
-        `<span class="cb-tier__label">${escapeHtml(tierLabel(tier, moneyFormat, offer.trigger))}</span>` +
+        // The reward, not the threshold. A shopper scanning a drawer wants to
+        // know what they get; the amount still needed is already stated above
+        // the bar, and repeating it under every marker crowded the row.
         `<span class="cb-tier__caption">${escapeHtml(tierCaption(tier))}</span>` +
         `</li>`
       );
@@ -171,7 +169,15 @@ export function renderOffer(input: RenderInput): string {
   // attribute on the same element. HTML keeps the *first* duplicate and drops
   // the rest, so --cb-progress was silently discarded and .cb__fill fell back
   // to its 0% default: setting any design token froze the bar at empty.
-  const style = [`--cb-progress:${percent}%`, tokenStyle(offer.design?.tokens)]
+  // Both forms. The percentage drives the bar layout directly; the unitless
+  // fraction is what the milestone layout needs, because there the fill has to
+  // span the *marker* range rather than the whole rail, and calc() cannot
+  // multiply a percentage by a percentage.
+  const style = [
+    `--cb-progress:${percent}%`,
+    `--cb-progress-n:${fraction.toFixed(4)}`,
+    tokenStyle(offer.design?.tokens),
+  ]
     .filter((part) => part !== '')
     .join(';');
 
@@ -239,28 +245,60 @@ export function renderRewardCard(
   displays: GiftDisplay[] = []
 ): string {
   const chosen = selected === undefined ? undefined : displays.find((d) => d.variantId === selected);
-  const label = selected === undefined ? 'Select free gift' : 'Change gift';
+  const claimed = selected !== undefined;
 
+  // The whole card is the control, not a button tucked inside it. In a drawer
+  // the card is roughly six times the tap target the button was, and it removes
+  // the row of competing elements that made the old layout feel busy.
   return (
-    `<div class="cb-reward${selected === undefined ? '' : ' is-claimed'}">` +
-    `<div class="cb-reward__head">` +
-    `<span class="cb-reward__title">Select your gift</span>` +
-    `<span class="cb-reward__badge">Unlocked</span>` +
-    `</div>` +
-    `<div class="cb-reward__body">` +
-    thumbStack(entitlement.candidates, displays) +
-    `<div class="cb-reward__text">` +
-    `<span class="cb-reward__status">${selected === undefined ? 'Reward unlocked!' : escapeHtml(chosen?.title ?? 'Gift selected')}</span>` +
-    `</div>` +
-    `<button type="button" class="cb-reward__cta"` +
+    `<button type="button" class="cb-reward${claimed ? ' is-claimed' : ''}"` +
     ` data-cb-open` +
     ` data-cb-offer="${escapeHtml(entitlement.offerId)}"` +
     ` data-cb-tier="${escapeHtml(entitlement.tierId)}">` +
-    `${escapeHtml(label)}</button>` +
-    `</div>` +
-    `</div>`
+    thumbStack(entitlement.candidates, displays) +
+    `<span class="cb-reward__text">` +
+    `<span class="cb-reward__status">` +
+    `${claimed ? escapeHtml(chosen?.title ?? 'Gift selected') : 'Reward unlocked!'}` +
+    `</span>` +
+    `<span class="cb-reward__action">${claimed ? 'Change' : 'Select'}</span>` +
+    `</span>` +
+    `</button>`
   );
 }
+
+/** A padlock, for the rewards header. */
+const LOCK_ICON =
+  '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" ' +
+  'stroke-width="1.6" aria-hidden="true">' +
+  '<rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>';
+
+/**
+ * The rewards block: one header, then the cards.
+ *
+ * The header sits outside the cards rather than repeating inside each one. With
+ * two unlocked tiers the repeated "Select your gift" read as two unrelated
+ * widgets stacked up, when it is one decision with two parts.
+ */
+export function renderRewards(cards: string[]): string {
+  if (cards.length === 0) return '';
+
+  const head =
+    `<div class="cb-reward__head">` +
+    `<span class="cb-reward__title">${LOCK_ICON}Select your gift</span>` +
+    `<span class="cb-reward__badge">Unlocked</span>` +
+    `</div>`;
+
+  // Two or more become a snap carousel. Stacked in a drawer the second card
+  // falls below the fold and a shopper never learns it exists; a peeking edge
+  // is what says "there is more".
+  const body =
+    cards.length > 1
+      ? `<div class="cb-rewards__track" role="group" aria-label="Available rewards" tabindex="0">${cards.join('')}</div>`
+      : cards.join('');
+
+  return `<div class="cb-rewards">${head}${body}</div>`;
+}
+
 
 /**
  * The gift picker, as a modal.
@@ -339,6 +377,21 @@ const ALLOWED_TOKENS = new Set([
   'locked-color',
   'unlocked-color',
   'font-weight',
+  // Typography and spacing a merchant can match to their theme. Values are
+  // still filtered by this allowlist and stripped of ;"'<> by tokenStyle, so
+  // widening the set does not widen what can be injected.
+  'message-size',
+  'message-weight',
+  'message-align',
+  'tier-size',
+  'tier-weight',
+  'tier-color',
+  'reward-title-size',
+  'reward-title-weight',
+  'reward-status-size',
+  'reward-status-weight',
+  'pad-x',
+  'pad-y',
 ]);
 
 export function tokenStyle(tokens: Record<string, string | number> | undefined): string {

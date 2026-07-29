@@ -133,7 +133,9 @@ export function newDraft(id: string, name = 'Untitled offer'): OfferDraft {
     // whole pool.
     claimPolicy: { withinTier: 'PICK_ONE', acrossTiers: 'STACK' },
     tiers: [{ ...newTier(5000), reward: 'FREE_SHIPPING' }],
-    design: { layout: 'BAR', preset: 'candy', tokens: {} },
+    // Milestones by default: the marker rail reads as a ladder of rewards,
+    // where a plain bar reads as one goal with decorations on it.
+    design: { layout: 'MILESTONE', preset: 'candy', tokens: {} },
     copy: {},
     placement: { drawer: true, cartPage: true },
     giftDisplays: [],

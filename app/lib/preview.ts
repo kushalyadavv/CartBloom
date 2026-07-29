@@ -10,7 +10,7 @@
 
 import { resolveOffer } from '../entitlement';
 import type { Cart } from '../entitlement/types';
-import { renderOffer, renderRewardCard, type GiftDisplay } from '../../widget/src/render';
+import { renderOffer, renderRewardCard, renderRewards, type GiftDisplay } from '../../widget/src/render';
 
 import { sortedTiers, toOffer, type OfferDraft } from './offer-draft';
 
@@ -92,10 +92,7 @@ export function previewMarkup(draft: OfferDraft, value: number, moneyFormat?: st
     .filter((g) => g.requiresChoice)
     .map((g) => renderRewardCard(g, undefined, displays));
 
-  const extra =
-    cards.length > 1
-      ? `<div class="cb-rewards" role="group" aria-label="Available rewards" tabindex="0">${cards.join('')}</div>`
-      : cards.join('');
+  const extra = renderRewards(cards);
 
   // renderOffer applies the design tokens itself, so there is nothing to
   // splice here — which is the point: the preview and the storefront now go

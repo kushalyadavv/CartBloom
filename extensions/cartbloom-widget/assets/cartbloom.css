@@ -33,9 +33,25 @@
   --cb-font-weight: 700;
   --cb-gap: 10px;
 
+  /* Typography and spacing a merchant can tune from the Design step. Each has
+     a default here so an untouched offer looks finished. */
+  --cb-message-size: 0.95em;
+  --cb-message-weight: var(--cb-font-weight);
+  --cb-message-align: center;
+  --cb-tier-size: 0.82em;
+  --cb-tier-weight: 700;
+  --cb-tier-color: var(--cb-locked-color);
+  --cb-reward-title-size: 0.86em;
+  --cb-reward-title-weight: 800;
+  --cb-reward-status-size: 1em;
+  --cb-reward-status-weight: 700;
+  --cb-pad-x: 0px;
+  --cb-pad-y: 0px;
+
   box-sizing: border-box;
   width: 100%;
   margin: 0 0 14px;
+  padding: var(--cb-pad-y) var(--cb-pad-x);
   font-family: inherit;
   color: inherit;
   container-type: inline-size;
@@ -49,9 +65,10 @@
 
 .cb__message {
   margin: 0 0 var(--cb-gap);
-  font-size: 0.95em;
-  font-weight: var(--cb-font-weight);
+  font-size: var(--cb-message-size);
+  font-weight: var(--cb-message-weight);
   line-height: 1.35;
+  text-align: var(--cb-message-align);
   color: var(--cb-message-color);
 }
 
@@ -161,30 +178,34 @@
   text-align: right;
 }
 
-/* A price should never break mid-number. */
-.cb-tier__label {
-  white-space: nowrap;
-}
-
 .cb-tier.is-unlocked {
   color: var(--cb-unlocked-color);
-  font-weight: 700;
 }
 
-.cb-tier__label {
-  font-weight: 700;
-}
-
-
-
+/*
+ * The reward name, and the only text under a marker.
+ *
+ * Uppercase with a little tracking so short labels ("Free gift") read as
+ * deliberate rather than cramped, and never breaks mid-label -- a wrapped
+ * "Free / gift" makes the row look broken at drawer widths.
+ */
 .cb-tier__caption {
-  font-size: 0.92em;
-  opacity: 0.8;
+  font-size: var(--cb-tier-size);
+  font-weight: var(--cb-tier-weight);
+  color: var(--cb-tier-color);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
-/* Past four tiers there is no room for captions at drawer widths; the
-   threshold alone still carries the meaning. */
-.cb__tiers:has(.cb-tier:nth-child(5)) .cb-tier__caption {
+.cb-tier.is-unlocked .cb-tier__caption {
+  color: var(--cb-unlocked-color);
+}
+
+/* Past five tiers the labels collide at drawer widths, and the markers alone
+   still carry the ladder. */
+.cb__tiers:has(.cb-tier:nth-child(6)) .cb-tier__caption {
   display: none;
 }
 
@@ -194,11 +215,39 @@
 
 /* -------------------------------------------------- layout: milestone ----- */
 
+/*
+ * The rail runs past the outer markers on both sides.
+ *
+ * `--cb-overhang` is how far. Ending the rail exactly under the first and last
+ * dots makes it look clipped -- the eye reads a bar that stops dead at a marker
+ * as unfinished, and the first tier appears to start from nothing. Letting it
+ * run on gives the ladder somewhere to come from and somewhere to go.
+ *
+ * The tiers list keeps the original inset, so markers still sit at their true
+ * position on the threshold scale; only the rail is wider.
+ */
 .cb[data-layout='milestone'] .cb__track {
-  height: 3px;
-  border-radius: 2px;
+  --cb-overhang: 16px;
+  height: 6px;
+  border-radius: 999px;
   overflow: visible;
-  margin: 18px 6% 0;
+  margin: 18px calc(6% - var(--cb-overhang)) 0;
+}
+
+/*
+ * The fill ends under the current marker, not at the rail's edge.
+ *
+ * Markers span [overhang, width - overhang], so a marker at fraction p sits at
+ * `overhang + p * (100% - 2 * overhang)`. The fill runs from the rail's left
+ * edge to there — which is why an empty ladder still shows a short stub of
+ * colour before the first marker, and a full one leaves grey running past the
+ * last.
+ */
+.cb[data-layout='milestone'] .cb__fill {
+  border-radius: 999px;
+  width: calc(
+    var(--cb-overhang) + (100% - var(--cb-overhang) * 2) * var(--cb-progress-n, 0)
+  );
 }
 
 .cb[data-layout='milestone'] .cb__fill::after {
@@ -207,37 +256,57 @@
 
 .cb[data-layout='milestone'] .cb__tiers {
   height: 4.2em;
-  margin: -13px 6% 0;
+  margin: -17px 6% 0;
 }
 
+/*
+ * Markers sit on the rail, not beside it.
+ *
+ * The ring is drawn with a box-shadow in the page background colour rather than
+ * a border, so the rail passes behind the dot and is masked by the ring — which
+ * is what makes a marker read as being *on* the line.
+ */
 .cb[data-layout='milestone'] .cb-tier__dot {
-  display: block;
-  width: 22px;
-  height: 22px;
-  margin-bottom: 4px;
-  border: 3px solid var(--cb-track);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 7px;
   border-radius: 50%;
-  background: Canvas;
+  background: var(--cb-track);
+  color: var(--cb-locked-color);
+  box-shadow: 0 0 0 4px Canvas;
+}
+
+.cb[data-layout='milestone'] .cb-tier__dot svg {
+  width: 15px;
+  height: 15px;
 }
 
 .cb[data-layout='milestone'] .cb-tier.is-unlocked .cb-tier__dot {
-  border-color: var(--cb-unlocked-color);
   background: var(--cb-unlocked-color);
+  color: #fff;
 }
 
 /* The current tier — the first locked one following an unlocked one — pulses. */
 .cb[data-layout='milestone'] .cb-tier.is-unlocked + .cb-tier:not(.is-unlocked) .cb-tier__dot {
-  border-color: var(--cb-unlocked-color);
+  box-shadow:
+    0 0 0 4px Canvas,
+    0 0 0 6px var(--cb-unlocked-color);
   animation: cb-pulse 1.8s ease-in-out infinite;
 }
 
 @keyframes cb-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(128, 128, 128, 0.28);
+    box-shadow:
+      0 0 0 4px Canvas,
+      0 0 0 6px var(--cb-unlocked-color);
   }
   50% {
-    box-shadow: 0 0 0 7px rgba(128, 128, 128, 0);
+    box-shadow:
+      0 0 0 4px Canvas,
+      0 0 0 11px transparent;
   }
 }
 
@@ -358,76 +427,113 @@
  * Replaces the inline chip list, which worked for three short labels and fell
  * apart at four products with real names — the ordinary case.
  */
-.cb-reward {
-  margin-top: 12px;
-  padding: 10px;
-  border: 1px solid var(--cb-track);
-  border-radius: 12px;
-}
-
+/* The header names the decision once, above however many cards follow. */
 .cb-reward__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .cb-reward__title {
-  font-size: 0.78em;
-  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--cb-reward-title-size);
+  font-weight: var(--cb-reward-title-weight);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+/* The padlock takes the unlocked colour; the words stay in body text, so the
+   row reads as a heading with a status rather than as two coloured things. */
+.cb-reward__title svg {
+  flex: 0 0 auto;
+  color: var(--cb-unlocked-color);
 }
 
 .cb-reward__badge {
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 99px;
-  background: color-mix(in srgb, var(--cb-unlocked-color) 14%, transparent);
+  background: color-mix(in srgb, var(--cb-unlocked-color) 12%, transparent);
   color: var(--cb-unlocked-color);
   font-size: 0.68em;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.cb-reward__body {
+/*
+ * The card is the button.
+ *
+ * Thumbnails anchor the left, the status is centred in what remains, and the
+ * action word sits under it. Centring rather than a left-aligned row with a
+ * button on the right is what makes this read as one calm object instead of
+ * three competing ones.
+ */
+.cb-reward {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--cb-track);
+  border-radius: 14px;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.cb-reward:hover {
+  border-color: color-mix(in srgb, var(--cb-unlocked-color) 45%, transparent);
+}
+
+.cb-reward:active {
+  transform: scale(0.995);
+}
+
+.cb-reward:focus-visible {
+  outline: 2px solid var(--cb-unlocked-color);
+  outline-offset: 2px;
 }
 
 .cb-reward__text {
   flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .cb-reward__status {
   display: block;
-  font-size: 0.82em;
-  font-weight: 700;
+  font-size: var(--cb-reward-status-size);
+  font-weight: var(--cb-reward-status-weight);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.cb-reward__cta {
-  flex: 0 0 auto;
-  padding: 9px 16px;
-  border: 0;
-  border-radius: 99px;
-  background: var(--cb-unlocked-color, #111);
-  color: #fff;
-  font: inherit;
+/* The verb, in the unlocked colour and tracked out. This is what replaced the
+   pill button — the card already invites the press. */
+.cb-reward__action {
   font-size: 0.78em;
   font-weight: 800;
-  letter-spacing: 0.03em;
-  cursor: pointer;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cb-unlocked-color);
 }
 
-.cb-reward__cta:focus-visible {
-  outline: 2px solid var(--cb-unlocked-color);
-  outline-offset: 2px;
+.cb-reward.is-claimed .cb-reward__action {
+  opacity: 0.75;
 }
 
 /* Overlapping thumbnails read as "several to choose from" in very little room. */
@@ -673,9 +779,12 @@
  * what turns "one reward" into "rewards, plural" without a label saying so.
  */
 .cb-rewards {
+  margin-top: 14px;
+}
+
+.cb-rewards__track {
   display: flex;
   gap: 10px;
-  margin-top: 12px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-padding-inline: 0;
@@ -685,17 +794,17 @@
 }
 
 /* Hidden, not disabled — the region still scrolls by wheel, drag and keyboard. */
-.cb-rewards::-webkit-scrollbar {
+.cb-rewards__track::-webkit-scrollbar {
   display: none;
 }
 
-.cb-rewards:focus-visible {
+.cb-rewards__track:focus-visible {
   outline: 2px solid var(--cb-unlocked-color, #111);
   outline-offset: 3px;
   border-radius: 12px;
 }
 
-.cb-rewards > .cb-reward {
+.cb-rewards__track > .cb-reward {
   flex: 0 0 87%;
   margin-top: 0;
   scroll-snap-align: start;
@@ -703,7 +812,7 @@
 
 /* On a wide cart page there is room for two abreast, and the third peeks. */
 @container (min-width: 560px) {
-  .cb-rewards > .cb-reward {
+  .cb-rewards__track > .cb-reward {
     flex-basis: 46%;
   }
 }
