@@ -296,7 +296,7 @@
 }
 
 .cb[data-layout='milestone'] .cb__tiers {
-  height: 4.2em;
+  height: 3.2em;
   margin: -17px 6% 0;
 }
 
@@ -573,6 +573,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: 0.05em;
 }
 
 /* The verb, in the unlocked colour and tracked out. This is what replaced the
