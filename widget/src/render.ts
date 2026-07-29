@@ -166,8 +166,17 @@ export function renderOffer(input: RenderInput): string {
     })
     .join('');
 
+  // One style attribute, always. Callers used to splice their design tokens in
+  // with `replace('<div class="cb"', ...)`, which produced a second style
+  // attribute on the same element. HTML keeps the *first* duplicate and drops
+  // the rest, so --cb-progress was silently discarded and .cb__fill fell back
+  // to its 0% default: setting any design token froze the bar at empty.
+  const style = [`--cb-progress:${percent}%`, tokenStyle(offer.design?.tokens)]
+    .filter((part) => part !== '')
+    .join(';');
+
   return (
-    `<div class="cb" data-layout="${layout.toLowerCase()}" data-preset="${escapeHtml(preset)}" style="--cb-progress:${percent}%">` +
+    `<div class="cb" data-layout="${layout.toLowerCase()}" data-preset="${escapeHtml(preset)}" style="${style}">` +
     `<p class="cb__message">${escapeHtml(progressMessage(input))}</p>` +
     `<div class="cb__track" role="progressbar" aria-valuemin="0" aria-valuemax="100"` +
     ` aria-valuenow="${percent}" aria-label="Rewards progress">` +

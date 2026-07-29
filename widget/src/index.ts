@@ -185,10 +185,10 @@ function boot(): void {
           extra: choosers,
         });
 
-        const tokens = tokenStyle(offer.design?.tokens);
-        return tokens === ''
-          ? markup
-          : markup.replace('<div class="cb"', `<div class="cb" style="${tokens}"`);
+        // Tokens are applied inside renderOffer, which folds them into the
+        // single style attribute on .cb. Splicing a second one here dropped
+        // --cb-progress and froze the bar at empty.
+        return markup;
       })
       .join('');
 
