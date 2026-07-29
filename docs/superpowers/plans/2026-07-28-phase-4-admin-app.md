@@ -96,26 +96,33 @@ route that did not exist:
 
 Straight from the review playbook; each item is a real observed failure.
 
-- [ ] **Step 1:** Token exchange for managed installation. Expiring offline tokens (`expiring=1`) — non-expiring ones are rejected by the Admin API.
-- [ ] **Step 2:** Fresh `window.shopify.idToken()` per API request. Verify server-side: HMAC, `exp`, `aud` == client id, shop from `dest`. **Retry once on `401 invalid-session-token`** — backgrounded tabs throttle App Bridge's refresh timer.
-- [ ] **Step 3:** No cookies, no localStorage for auth. Must work in Chrome incognito with third-party cookies blocked.
-- [ ] **Step 4:** Register webhooks on **first token acquisition**, idempotent, gated by a once-per-shop flag. Never a manual script.
+- [x] **Step 1:** Token exchange for managed installation. Expiring offline tokens (`expiring=1`) — non-expiring ones are rejected by the Admin API.
+- [x] **Step 2:** Fresh `window.shopify.idToken()` per API request. Verify server-side: HMAC, `exp`, `aud` == client id, shop from `dest`. **Retry once on `401 invalid-session-token`** — backgrounded tabs throttle App Bridge's refresh timer.
+- [x] **Step 3:** No cookies, no localStorage for auth. Must work in Chrome incognito with third-party cookies blocked.
+- [x] **Step 4:** Register webhooks on **first token acquisition**, idempotent, gated by a once-per-shop flag. Never a manual script.
 - [x] **Step 5:** Implement the three compliance topics. `shop/redact` genuinely purges every row for that shop.
-- [ ] **Step 6:** **A CI check that greps the built HTML for the real client id** and fails the build on a surviving placeholder. This failure is invisible locally and surfaces only as a rejected automated check.
+- [x] **Step 6:** **A CI check that greps the built HTML for the real client id** and fails the build on a surviving placeholder. This failure is invisible locally and surfaces only as a rejected automated check.
 - [ ] **Step 7:** Commit.
 
 ## Task 42: The offer wizard
 
+> **Built and deployed, not yet driven by a human.** Every step, the preview and
+> the scrubber are in. What no test covers is whether the Polaris web components
+> report their values: React 18 does not bind custom-element events through JSX,
+> so binding goes through one delegated `input`/`change` listener per step. That
+> is version-proof in principle and unverified in a browser. If a field looks
+> dead, that listener is the first place to look.
+
 Six steps: **Trigger → Tiers → Gifts → Design → Placement → Review.** Drafts autosave to D1; nothing reaches the storefront until Publish.
 
-- [ ] **Step 1:** Wizard shell with step state in the URL, so a merchant can link to or reload a step.
-- [ ] **Step 2:** Trigger — subtotal or quantity; scope (entire cart / collections / products); audience (customer tags as **free text**, markets as country codes, schedule).
-- [ ] **Step 3:** Tiers — thresholds and reward types, validated ascending and non-duplicate.
-- [ ] **Step 4:** Gifts — product picker per tier, plus the two claim-policy axes. §6 is the hard part to explain; the Review step (Step 8) carries that load.
-- [ ] **Step 5:** Design — layout, preset, token overrides, live preview.
-- [ ] **Step 6:** Placement — drawer and cart page toggles.
-- [ ] **Step 7:** **A cart-value scrubber in the preview.** Drag from $0 past the top tier and watch tiers unlock and choosers appear. It turns "did I configure this right?" into a three-second answer instead of a test order, and it is the strongest feature-media asset for the listing.
-- [ ] **Step 8:** Review states the offer in plain language — *"Customers spending $100 or more can pick 1 of 3 gifts. At $150 they can pick 1 of 2 more, and keep both."* The claim-policy matrix is exactly what merchants misconfigure confidently.
+- [x] **Step 1:** Wizard shell with step state in the URL, so a merchant can link to or reload a step.
+- [x] **Step 2:** Trigger — subtotal or quantity; scope (entire cart / collections / products); audience (customer tags as **free text**, markets as country codes, schedule).
+- [x] **Step 3:** Tiers — thresholds and reward types, validated ascending and non-duplicate.
+- [x] **Step 4:** Gifts — product picker per tier, plus the two claim-policy axes. §6 is the hard part to explain; the Review step (Step 8) carries that load.
+- [x] **Step 5:** Design — layout, preset, token overrides, live preview.
+- [x] **Step 6:** Placement — drawer and cart page toggles.
+- [x] **Step 7:** **A cart-value scrubber in the preview.** Drag from $0 past the top tier and watch tiers unlock and choosers appear. It turns "did I configure this right?" into a three-second answer instead of a test order, and it is the strongest feature-media asset for the listing.
+- [x] **Step 8:** Review states the offer in plain language — *"Customers spending $100 or more can pick 1 of 3 gifts. At $150 they can pick 1 of 2 more, and keep both."* The claim-policy matrix is exactly what merchants misconfigure confidently.
 - [ ] **Step 9:** Commit.
 
 **The preview must render the real widget code**, not a lookalike. If preview and storefront diverge, merchants configure against a lie and file bugs nobody can reproduce. Import from `widget/src/`.
