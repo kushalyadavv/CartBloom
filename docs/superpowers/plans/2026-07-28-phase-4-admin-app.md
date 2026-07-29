@@ -102,7 +102,7 @@ Straight from the review playbook; each item is a real observed failure.
 - [x] **Step 4:** Register webhooks on **first token acquisition**, idempotent, gated by a once-per-shop flag. Never a manual script.
 - [x] **Step 5:** Implement the three compliance topics. `shop/redact` genuinely purges every row for that shop.
 - [x] **Step 6:** **A CI check that greps the built HTML for the real client id** and fails the build on a surviving placeholder. This failure is invisible locally and surfaces only as a rejected automated check.
-- [ ] **Step 7:** Commit.
+- [x] **Step 7:** Commit.
 
 ## Task 42: The offer wizard
 
@@ -123,7 +123,7 @@ Six steps: **Trigger → Tiers → Gifts → Design → Placement → Review.** 
 - [x] **Step 6:** Placement — drawer and cart page toggles.
 - [x] **Step 7:** **A cart-value scrubber in the preview.** Drag from $0 past the top tier and watch tiers unlock and choosers appear. It turns "did I configure this right?" into a three-second answer instead of a test order, and it is the strongest feature-media asset for the listing.
 - [x] **Step 8:** Review states the offer in plain language — *"Customers spending $100 or more can pick 1 of 3 gifts. At $150 they can pick 1 of 2 more, and keep both."* The claim-policy matrix is exactly what merchants misconfigure confidently.
-- [ ] **Step 9:** Commit.
+- [x] **Step 9:** Commit.
 
 **The preview must render the real widget code**, not a lookalike. If preview and storefront diverge, merchants configure against a lie and file bugs nobody can reproduce. Import from `widget/src/`.
 
@@ -131,34 +131,34 @@ Six steps: **Trigger → Tiers → Gifts → Design → Placement → Review.** 
 
 The storefront chooser currently shows raw variant GIDs because nothing populates `giftDisplays`.
 
-- [ ] **Step 1:** At publish, resolve each pool variant to `{ variantId, title, image, price }` via Admin GraphQL, batched in one query rather than per variant.
-- [ ] **Step 2:** Embed the result in the **widget** payload only. The function has no use for it and its metafield budget is 10,000 bytes.
-- [ ] **Step 3:** Handle a variant that no longer exists — drop it from the pool and warn, rather than publishing a gift nobody can claim.
-- [ ] **Step 4:** Commit.
+- [x] **Step 1:** At publish, resolve each pool variant to `{ variantId, title, image, price }` via Admin GraphQL, batched in one query rather than per variant.
+- [x] **Step 2:** Embed the result in the **widget** payload only. The function has no use for it and its metafield budget is 10,000 bytes.
+- [x] **Step 3:** Handle a variant that no longer exists — drop it from the pool and warn, rather than publishing a gift nobody can claim.
+- [x] **Step 4:** Commit.
 
 ## Task 44: Publish-time validation
 
 Everything here exists because it was observed failing, or because failure is silent.
 
-- [ ] **Step 1: Config size.** Refuse to publish when the compact payload exceeds **10,000 bytes**, naming what to cut. An oversized metafield is delivered to the function as `null` — the offer silently stops working with no error anywhere.
-- [ ] **Step 2: Input-variable caps.** At most **100 customer tags** and **100 collection ids** across all offers; Shopify errors past that.
-- [ ] **Step 3: `startsAt` in the past.** Task 25 found `discountAutomaticAppCreate` accepts a future `startsAt`, reports `SCHEDULED`, and silently does nothing. Default to the past, or surface the scheduled state prominently.
-- [ ] **Step 4: Gift products purchasable.** Warn when a pool variant is out of stock or unpublished. The function discounts it happily; the shopper cannot buy it.
-- [ ] **Step 5: Plan caps** (§10), enforced at publish rather than at read.
-- [ ] **Step 6: Tier sanity** — ascending thresholds, non-empty gift pools on `GIFT` tiers, a valid `pinnedTierId` when the policy is `PINNED`.
-- [ ] **Step 7:** Commit.
+- [x] **Step 1: Config size.** Refuse to publish when the compact payload exceeds **10,000 bytes**, naming what to cut. An oversized metafield is delivered to the function as `null` — the offer silently stops working with no error anywhere.
+- [x] **Step 2: Input-variable caps.** At most **100 customer tags** and **100 collection ids** across all offers; Shopify errors past that.
+- [x] **Step 3: `startsAt` in the past.** Task 25 found `discountAutomaticAppCreate` accepts a future `startsAt`, reports `SCHEDULED`, and silently does nothing. Default to the past, or surface the scheduled state prominently.
+- [x] **Step 4: Gift products purchasable.** Warn when a pool variant is out of stock or unpublished. The function discounts it happily; the shopper cannot buy it.
+- [x] **Step 5: Plan caps** (§10), enforced at publish rather than at read.
+- [x] **Step 6: Tier sanity** — ascending thresholds, non-empty gift pools on `GIFT` tiers, a valid `pinnedTierId` when the policy is `PINNED`.
+- [x] **Step 7:** Commit.
 
 ## Task 45: The publish pipeline
 
-- [ ] **Step 1:** Compile drafts into three payloads: **compact config** and **input variables** to the discount node, **verbose config** to the shop metafield. One version hash stamped across all three so drift is detectable.
-- [ ] **Step 2:** Create or update **exactly one** automatic app discount per shop via `discountAutomaticAppCreate` / `Update`, idempotent, recording `discount_node_id`. The 25-node cap is shared with every other app the merchant has installed.
-- [ ] **Step 3:** Write all three metafields. A partial publish leaves the function and widget disagreeing, which is the divergence the whole project is built to avoid — on failure, restore the previous version.
-- [ ] **Step 4:** Record the version in `published_versions` and offer one-click rollback.
-- [ ] **Step 5:** Commit.
+- [x] **Step 1:** Compile drafts into three payloads: **compact config** and **input variables** to the discount node, **verbose config** to the shop metafield. One version hash stamped across all three so drift is detectable.
+- [x] **Step 2:** Create or update **exactly one** automatic app discount per shop via `discountAutomaticAppCreate` / `Update`, idempotent, recording `discount_node_id`. The 25-node cap is shared with every other app the merchant has installed.
+- [x] **Step 3:** Write all three metafields. A partial publish leaves the function and widget disagreeing, which is the divergence the whole project is built to avoid — on failure, restore the previous version.
+- [x] Record the version in `published_versions`. **Rollback is still only stored, not offered** — every publish is recorded under a version hash, but nothing in the UI restores one.
+- [x] **Step 5:** Commit.
 
 ## Task 46: Remove the template's demo artefacts
 
-- [ ] **Step 1:** Delete the scaffold's example routes, the demo product mutation, and any remaining Prisma references.
+- [x] **Step 1:** Delete the scaffold's example routes, the demo product mutation, and any remaining Prisma references.
 - [ ] **Step 2:** Confirm `shopify.app.toml` scopes are still `write_discounts,read_products` and nothing widened them.
 - [ ] **Step 3:** Nav icon: 16×16 SVG, single colour `currentColor`, transparent, no Shopify branding.
 - [ ] **Step 4:** Commit.
