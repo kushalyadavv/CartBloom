@@ -241,9 +241,40 @@ function boot(): void {
 
     void queue
       .run(async () => {
-        for (const r of remove) await removeLine(r.key, routes);
-        for (const a of add) await addGift(a, routes);
-        return refreshAndRepaint();
+        // The last write carries the section request, so the markup that comes
+        // back is rendered from the post-mutation cart.
+        //
+        // This path used to mutate and then fetch sections separately, which is
+        // the same race already fixed for the modal: the fetch can be served
+        // from before the write lands, and the shopper sees their gift only
+        // after a full page reload. A tier with a single gift auto-claims, so
+        // this is the only path that runs for it and the bug was invisible
+        // wherever a chooser appeared.
+        const want = sectionsToRequest();
+        const writes: Array<(sections: string[]) => Promise<Response>> = [
+          ...remove.map((r) => (sections: string[]) => removeLine(r.key, routes, sections)),
+          ...add.map((a) => (sections: string[]) => addGift(a, routes, sections)),
+        ];
+
+        let last: Response | undefined;
+        for (let i = 0; i < writes.length; i += 1) {
+          last = await writes[i](i === writes.length - 1 ? want : []);
+        }
+
+        const body =
+          last === undefined
+            ? undefined
+            : ((await last.json().catch(() => undefined)) as
+                | { sections?: Record<string, string> }
+                | undefined);
+
+        const swapped = body?.sections !== undefined && applySections(body.sections);
+        if (!swapped) await refreshCartSections().catch(() => false);
+
+        for (const el of [...hosts.keys()]) if (!el.isConnected) hosts.delete(el);
+        adoptDeclaredHosts();
+        attach(findDrawerMount());
+        paint(await fetchCart(cartUrl));
       })
       .catch(() => {
         notice = 'We could not update your gift. Please try again.';
@@ -442,30 +473,6 @@ function boot(): void {
     attachHost(result.host);
   };
 
-  /**
-   * Re-render the theme's cart markup, then re-attach.
-   *
-   * We mutate through the AJAX API because gift claims travel as line
-   * properties and `Shopify.actions.updateCart` cannot carry them. That leaves
-   * the theme unaware of the change, so its drawer shows stale line items until
-   * a page load. Refreshing the sections fixes that — but the swap destroys our
-   * host along with the theme's markup, so mounting has to happen again.
-   */
-  const refreshAndRepaint = async (): Promise<void> => {
-    // Not swallowed. A silent failure here looks identical to the refresh
-    // working, which cost several rounds of diagnosis.
-    const replaced = await refreshCartSections().catch((error: unknown) => {
-      console.warn('[CartBloom] section refresh failed', error);
-      return false;
-    });
-    if (replaced) {
-      // The swap destroyed the markup, and our hosts with it.
-      for (const el of [...hosts.keys()]) if (!el.isConnected) hosts.delete(el);
-      adoptDeclaredHosts();
-      attach(findDrawerMount());
-    }
-    paint(await fetchCart(cartUrl));
-  };
 
   // App blocks render their host in Liquid, so they exist before mounting runs.
   adoptDeclaredHosts();
