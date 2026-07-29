@@ -290,6 +290,14 @@ describe('design tokens', () => {
   it('still drops anything outside the allowlist', () => {
     expect(tokenStyle({ 'background-image': 'url(evil)' })).toBe('');
   });
+
+  it('takes each padding side independently', () => {
+    const style = tokenStyle({ 'pad-top': '20px', 'pad-left': '4px' });
+    expect(style).toContain('--cb-pad-top:20px');
+    expect(style).toContain('--cb-pad-left:4px');
+    // The old paired tokens are gone; a stale config must not resurrect them.
+    expect(tokenStyle({ 'pad-x': '10px', 'pad-y': '10px' })).toBe('');
+  });
 });
 
 describe('renderModal token isolation', () => {

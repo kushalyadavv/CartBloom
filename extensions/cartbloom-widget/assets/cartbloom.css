@@ -45,8 +45,10 @@
   --cb-reward-title-weight: 800;
   --cb-reward-status-size: 1em;
   --cb-reward-status-weight: 700;
-  --cb-pad-x: 0px;
-  --cb-pad-y: 0px;
+  --cb-pad-top: 0px;
+  --cb-pad-right: 0px;
+  --cb-pad-bottom: 0px;
+  --cb-pad-left: 0px;
 
   /* The solid counterpart to --cb-fill, for borders, ticks and outlines that a
      gradient cannot paint. Presets and the Design step keep the two in step. */
@@ -56,7 +58,7 @@
   box-sizing: border-box;
   width: 100%;
   margin: 0 0 14px;
-  padding: var(--cb-pad-y) var(--cb-pad-x);
+  padding: var(--cb-pad-top) var(--cb-pad-right) var(--cb-pad-bottom) var(--cb-pad-left);
   font-family: inherit;
   color: inherit;
   container-type: inline-size;
@@ -168,21 +170,15 @@
  * hard right edge — wraps one character per line down the outside. Anchoring
  * removes the overhang entirely instead of trying to compensate for it.
  */
-.cb-tier:first-child {
-  left: 0;
-  transform: none;
-  align-items: flex-start;
-  text-align: left;
-}
-
-.cb-tier:last-child {
-  left: auto;
-  right: 0;
-  transform: none;
-  align-items: flex-end;
-  text-align: right;
-}
-
+/*
+ * Every label centres under its own marker, the outer two included.
+ *
+ * These used to anchor to the edges — flush left on the first, flush right on
+ * the last — to stop long price labels overhanging the widget. Now that the
+ * label is a short reward name rather than an amount, the overhang is a few
+ * pixels and the misalignment was the more obvious defect: three markers with
+ * three different label alignments read as broken spacing.
+ */
 .cb-tier.is-unlocked {
   color: var(--cb-unlocked-color);
 }
@@ -415,10 +411,20 @@
 }
 
 /*
- * Drawer panels are usually flex columns, and the empty-cart region often
- * grows to fill them. Without an explicit order, a host inserted before it can
- * still be laid out after it.
+ * Drawer panels are usually flex columns, and the empty-cart region often grows
+ * to fill them, so without an explicit order a host inserted before it can
+ * still be laid out after it. Hence order: -1.
+ *
+ * On its own that also hoisted the widget above the drawer's own heading, which
+ * has to stay first. So anything the host follows in the DOM is pulled ahead of
+ * it: `:has(~ [data-cartbloom-host])` matches exactly the siblings that precede
+ * our host, which is the header and nothing else. The relationship is required,
+ * so this cannot reorder a theme element that has nothing to do with us.
  */
+:has(~ [data-cartbloom-host]) {
+  order: -2;
+}
+
 [data-cartbloom-host] {
   order: -1;
   flex: 0 0 auto;

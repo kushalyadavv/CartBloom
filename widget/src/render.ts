@@ -413,8 +413,10 @@ const ALLOWED_TOKENS = new Set([
   'reward-title-weight',
   'reward-status-size',
   'reward-status-weight',
-  'pad-x',
-  'pad-y',
+  'pad-top',
+  'pad-right',
+  'pad-bottom',
+  'pad-left',
   // A solid colour for things a gradient cannot paint — a tile's border, the
   // tick, an outline. `--cb-fill` may be a gradient, and `border-color:
   // <gradient>` is invalid at computed-value time, which drops the property

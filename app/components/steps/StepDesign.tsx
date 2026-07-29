@@ -40,20 +40,29 @@ const COLOUR_TOKENS = [
 
 const WEIGHTS = ['400', '500', '600', '700', '800'];
 
-const SIZES = [
-  { value: '', label: 'Default' },
-  { value: '0.8em', label: 'Small' },
-  { value: '0.95em', label: 'Medium' },
-  { value: '1.1em', label: 'Large' },
-  { value: '1.3em', label: 'Extra large' },
-];
+/**
+ * Sizes a merchant has already seen somewhere, so an empty field is a real
+ * default rather than a guess at what the theme does.
+ */
+const SIZE_PLACEHOLDER: Record<string, number> = {
+  'message-size': 15,
+  'tier-size': 13,
+  'reward-title-size': 14,
+  'reward-status-size': 16,
+};
 
-const SPACING = [
-  { value: '', label: 'None' },
-  { value: '8px', label: 'Small' },
-  { value: '16px', label: 'Medium' },
-  { value: '24px', label: 'Large' },
-];
+const PADDING_SIDES = [
+  { key: 'pad-top', label: 'Top' },
+  { key: 'pad-right', label: 'Right' },
+  { key: 'pad-bottom', label: 'Bottom' },
+  { key: 'pad-left', label: 'Left' },
+] as const;
+
+/** "14px" to 14. An unset token reads as null, not zero. */
+function px(value: string): number | null {
+  const n = Number.parseFloat(value);
+  return Number.isFinite(n) ? n : null;
+}
 
 export function StepDesign({ draft, update }: Props) {
   const ref = useRef<HTMLDivElement>(null);
@@ -82,8 +91,13 @@ export function StepDesign({ draft, update }: Props) {
         const tokens = { ...draft.design.tokens };
         // An empty value removes the override rather than storing "", which
         // would emit `--cb-fill:` and break the declaration it sits in.
-        if (value === '') delete tokens[key];
-        else tokens[key] = value;
+        //
+        // Size fields report a bare number, so the unit is added here. Without
+        // it the token would be `--cb-message-size:15`, which is invalid and
+        // drops the whole declaration.
+        const withUnit = key.endsWith('-size') && value !== '' ? `${value}px` : value;
+        if (withUnit === '') delete tokens[key];
+        else tokens[key] = withUnit;
 
         // The fill colour also drives the solid accent — the selected tile's
         // border, its tick, the focus ring. Those cannot take a gradient, so
@@ -103,6 +117,37 @@ export function StepDesign({ draft, update }: Props) {
   useFieldEvents(ref, onField);
 
   const token = (key: string) => draft.design.tokens[key] ?? '';
+
+  const setToken = useCallback(
+    (key: string, value: string) => {
+      const tokens = { ...draft.design.tokens };
+      if (value === '' || value === '0px') delete tokens[key];
+      else tokens[key] = value;
+      update({ design: { ...draft.design, tokens } });
+    },
+    [draft.design, update]
+  );
+
+  /**
+   * A size in pixels.
+   *
+   * Was a five-item list of `em` values, which meant a merchant matching a
+   * theme could get close and never exact. Pixels because that is the unit the
+   * rest of a theme editor speaks; the widget scales them against nothing else,
+   * so what is typed is what renders.
+   */
+  const size = (name: string, label: string) => (
+    <s-number-field
+      name={`token:${name}`}
+      label={label}
+      value={token(name) === '' ? '' : String(px(token(name)) ?? '')}
+      placeholder={String(SIZE_PLACEHOLDER[name] ?? 15)}
+      min={8}
+      max={48}
+      step={1}
+      details="px"
+    />
+  );
 
   const choice = (
     name: string,
@@ -152,7 +197,7 @@ export function StepDesign({ draft, update }: Props) {
         />
 
         <s-grid gridTemplateColumns="1fr 1fr 1fr" gap="small">
-          <s-grid-item>{choice('message-size', 'Size', SIZES)}</s-grid-item>
+          <s-grid-item>{size('message-size', 'Size')}</s-grid-item>
           <s-grid-item>{weight('message-weight', 'Weight')}</s-grid-item>
           <s-grid-item>
             {choice('message-align', 'Alignment', [
@@ -171,7 +216,7 @@ export function StepDesign({ draft, update }: Props) {
         </s-text>
 
         <s-grid gridTemplateColumns="1fr 1fr" gap="small">
-          <s-grid-item>{choice('tier-size', 'Size', SIZES)}</s-grid-item>
+          <s-grid-item>{size('tier-size', 'Size')}</s-grid-item>
           <s-grid-item>{weight('tier-weight', 'Weight')}</s-grid-item>
         </s-grid>
 
@@ -179,9 +224,9 @@ export function StepDesign({ draft, update }: Props) {
         <s-heading>Gift card</s-heading>
 
         <s-grid gridTemplateColumns="1fr 1fr" gap="small">
-          <s-grid-item>{choice('reward-title-size', '“Select your gift” size', SIZES)}</s-grid-item>
+          <s-grid-item>{size('reward-title-size', '“Select your gift” size')}</s-grid-item>
           <s-grid-item>{weight('reward-title-weight', '“Select your gift” weight')}</s-grid-item>
-          <s-grid-item>{choice('reward-status-size', 'Reward text size', SIZES)}</s-grid-item>
+          <s-grid-item>{size('reward-status-size', 'Reward text size')}</s-grid-item>
           <s-grid-item>{weight('reward-status-weight', 'Reward text weight')}</s-grid-item>
         </s-grid>
 
@@ -191,10 +236,31 @@ export function StepDesign({ draft, update }: Props) {
           Room around the whole widget, for when your drawer already has padding of its own.
         </s-text>
 
-        <s-grid gridTemplateColumns="1fr 1fr" gap="small">
-          <s-grid-item>{choice('pad-x', 'Left and right', SPACING)}</s-grid-item>
-          <s-grid-item>{choice('pad-y', 'Top and bottom', SPACING)}</s-grid-item>
-        </s-grid>
+<s-stack gap="small">
+          {PADDING_SIDES.map((side) => {
+            const current = px(token(side.key)) ?? 0;
+            return (
+              <s-stack key={side.key} gap="none">
+                <s-text>{`${side.label} — ${current}px`}</s-text>
+                {/*
+                  A native range input: Polaris has no slider, and dragging is
+                  the point — spacing is judged against the preview beside it,
+                  not typed.
+                */}
+                <input
+                  type="range"
+                  min={0}
+                  max={48}
+                  step={1}
+                  value={current}
+                  aria-label={`${side.label} spacing in pixels`}
+                  onChange={(e) => setToken(side.key, `${e.target.value}px`)}
+                  style={{ width: '100%' }}
+                />
+              </s-stack>
+            );
+          })}
+        </s-stack>
 
         <s-divider />
         <s-heading>Buttons</s-heading>
