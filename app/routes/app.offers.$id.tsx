@@ -13,7 +13,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LoaderFunctionArgs } from 'react-router';
 import { useLoaderData, useRevalidator, useSearchParams } from 'react-router';
 
-import { getOffer, getShop } from '../db.server';
+import { getOffer } from '../db.server';
+import { resolvePlan } from '../lib/plan.server';
 import { authenticatedFetch } from '../lib/authenticated-fetch';
 import {
   blockingIssues,
@@ -33,18 +34,17 @@ import { StepTiers } from '../components/steps/StepTiers';
 import { StepTrigger } from '../components/steps/StepTrigger';
 
 export const loader = async ({ request, params, context }: LoaderFunctionArgs) => {
-  const { session } = await context.shopify.authenticate.admin(request);
+  const { session, admin } = await context.shopify.authenticate.admin(request);
   const record = await getOffer(context.env.DB, session.shop, params.id!);
 
   if (record === null) {
     throw new Response('Offer not found', { status: 404 });
   }
 
-  const shop = await getShop(context.env.DB, session.shop);
   return {
     offer: record.config as OfferDraft,
     status: record.status,
-    plan: shop?.plan ?? 'free',
+    plan: await resolvePlan(admin, context.env.DB, session.shop),
   };
 };
 

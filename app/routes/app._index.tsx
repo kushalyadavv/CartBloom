@@ -9,20 +9,25 @@ import { useState } from 'react';
 import type { LoaderFunctionArgs } from 'react-router';
 import { useLoaderData, useNavigate, useRevalidator } from 'react-router';
 
-import { getShop, listOffers } from '../db.server';
+import { listOffers } from '../db.server';
+import { resolvePlan } from '../lib/plan.server';
 import { authenticatedFetch } from '../lib/authenticated-fetch';
 import { planCaps, type OfferDraft, type OfferStatus } from '../lib/offer-draft';
 import { tierSentences } from '../lib/plain-language';
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-  const { session } = await context.shopify.authenticate.admin(request);
-  const [offers, shop] = await Promise.all([
+  const { session, admin } = await context.shopify.authenticate.admin(request);
+  const [offers, plan] = await Promise.all([
     listOffers(context.env.DB, session.shop),
-    getShop(context.env.DB, session.shop),
+    resolvePlan(admin, context.env.DB, session.shop),
   ]);
+  const liveCount = offers.filter((o) => o.status === 'PUBLISHED').length;
 
-  const plan = shop?.plan ?? 'free';
   return {
+    // Grandfathered: a downgrade never stops a running offer, so this can
+    // legitimately exceed the cap. Saying so beats a merchant discovering it
+    // when a publish is refused.
+    overCap: liveCount > planCaps(plan).activeOffers,
     offers: offers.map((o) => {
       const draft = o.config as OfferDraft;
       return {
@@ -43,7 +48,7 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 type Offer = Awaited<ReturnType<typeof loader>>['offers'][number];
 
 export default function Dashboard() {
-  const { offers, caps } = useLoaderData<typeof loader>();
+  const { offers, caps, overCap } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const revalidator = useRevalidator();
   const [busy, setBusy] = useState<string | null>(null);
@@ -166,12 +171,21 @@ export default function Dashboard() {
         </s-section>
       )}
 
-      {live >= caps.activeOffers && offers.length > 0 && (
+      {overCap ? (
         <s-section>
-          <s-banner tone="info">
-            {`Your plan runs ${caps.activeOffers} live offer${caps.activeOffers === 1 ? '' : 's'} at a time. Drafts are unlimited.`}
+          <s-banner tone="warning" heading="More offers are live than your plan allows">
+            {`They keep running — nothing on your storefront has changed. Publishing or editing is paused until you are back within ${caps.activeOffers}, or on a larger plan.`}
           </s-banner>
         </s-section>
+      ) : (
+        live >= caps.activeOffers &&
+        offers.length > 0 && (
+          <s-section>
+            <s-banner tone="info">
+              {`Your plan runs ${caps.activeOffers} live offer${caps.activeOffers === 1 ? '' : 's'} at a time. Drafts are unlimited.`}
+            </s-banner>
+          </s-section>
+        )
       )}
     </s-page>
   );

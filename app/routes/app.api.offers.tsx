@@ -12,14 +12,15 @@
 
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router';
 
-import { getShop, listOffers, saveOffer } from '../db.server';
+import { listOffers, saveOffer } from '../db.server';
+import { resolvePlan } from '../lib/plan.server';
 import { newDraft, planCaps, type OfferDraft } from '../lib/offer-draft';
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-  const { session } = await context.shopify.authenticate.admin(request);
-  const [offers, shop] = await Promise.all([
+  const { session, admin } = await context.shopify.authenticate.admin(request);
+  const [offers, plan] = await Promise.all([
     listOffers(context.env.DB, session.shop),
-    getShop(context.env.DB, session.shop),
+    resolvePlan(admin, context.env.DB, session.shop),
   ]);
 
   return Response.json({
@@ -29,8 +30,8 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
       status: o.status,
       updatedAt: o.updatedAt,
     })),
-    plan: shop?.plan ?? 'free',
-    caps: planCaps(shop?.plan),
+    plan,
+    caps: planCaps(plan),
   });
 };
 

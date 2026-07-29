@@ -173,11 +173,11 @@ time.
 
 ## Task 47: Plan gating
 
-- [ ] **Step 1:** Read plan state from the **Partner API** (`activeSubscription()`), cached in D1 with a short TTL.
-- [ ] **Step 2:** Redirect to Shopify's hosted plan page rather than building billing UI: `https://admin.shopify.com/store/:handle/charges/:app_handle/pricing_plans`.
-- [ ] **Step 3:** Handle `plan_handle` and `shop` redirect parameters on the welcome URL. No webhooks, no `charge_id`.
-- [ ] **Step 4:** **Grandfather on downgrade.** Published offers keep running; editing or publishing beyond the new plan's limits is blocked with a persistent banner. Silently breaking a live storefront promotion earns a one-star review that never comes off.
-- [ ] **Step 5:** Verify the frontend reflects the real plan. A flat-vs-nested response-shape mismatch is a classic 100%-reproducible bug that leaves the plan badge permanently wrong while adjacent fields look fine.
+- [x] **Step 1:** Read from the **Admin API** (`currentAppInstallation.activeSubscriptions`), not the Partner API — the app's own token already answers this, so there is no second credential and no extra scope. Cached in D1 for 5 minutes.
+- [x] **Step 2:** Links to the hosted plan page. The app handle is an env var, not a literal — getting it wrong 404s the one page that takes money.
+- [x] **Step 3:** `plan_handle` on the return bypasses the cache, so a merchant who just upgraded never sees their old limits.
+- [x] **Step 4:** **Grandfather on downgrade.**
+- [ ] **Step 5:** Verify the frontend reflects the real plan — **needs a real paid subscription to test.**
 - [ ] **Step 6:** Commit.
 
 ## Task 48: End-to-end on a dev store

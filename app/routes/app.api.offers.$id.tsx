@@ -11,23 +11,23 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router';
 import { deleteOffer, getOffer, getShop, listOffers, saveOffer } from '../db.server';
 import type { OfferRecord } from '../db.server';
 import { validateDraft, type OfferDraft } from '../lib/offer-draft';
+import { resolvePlan } from '../lib/plan.server';
 import { syncStorefront } from '../lib/publish.server';
 
 type OfferRecordStatus = OfferRecord['status'];
 
 export const loader = async ({ request, params, context }: LoaderFunctionArgs) => {
-  const { session } = await context.shopify.authenticate.admin(request);
+  const { session, admin } = await context.shopify.authenticate.admin(request);
   const record = await getOffer(context.env.DB, session.shop, params.id!);
 
   if (record === null) return Response.json({ error: 'Not found' }, { status: 404 });
 
-  const shop = await getShop(context.env.DB, session.shop);
   const draft = record.config as OfferDraft;
 
   return Response.json({
     offer: draft,
     status: record.status,
-    issues: validateDraft(draft, shop?.plan ?? 'free'),
+    issues: validateDraft(draft, await resolvePlan(admin, context.env.DB, session.shop)),
   });
 };
 
@@ -109,6 +109,8 @@ export const action = async ({ request, params, context }: ActionFunctionArgs) =
     config: draft,
   });
 
-  const shop = await getShop(context.env.DB, session.shop);
-  return Response.json({ ok: true, issues: validateDraft(draft, shop?.plan ?? 'free') });
+  return Response.json({
+    ok: true,
+    issues: validateDraft(draft, await resolvePlan(admin, context.env.DB, session.shop)),
+  });
 };

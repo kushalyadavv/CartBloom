@@ -11,23 +11,44 @@
 import type { LoaderFunctionArgs } from 'react-router';
 import { useLoaderData } from 'react-router';
 
-import { getShop, listOffers } from '../db.server';
+import { listOffers } from '../db.server';
+import { refreshPlan, resolvePlan } from '../lib/plan.server';
 import { PLAN_CAPS, planCaps, type PlanName } from '../lib/offer-draft';
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-  const { session } = await context.shopify.authenticate.admin(request);
-  const [shop, offers] = await Promise.all([
-    getShop(context.env.DB, session.shop),
+  const { session, admin } = await context.shopify.authenticate.admin(request);
+
+  // Shopify sends the merchant back here after they change plan, with
+  // plan_handle set. Inside the cache TTL they would otherwise be looking at
+  // their old limits and conclude the upgrade failed, so that return bypasses
+  // the cache.
+  const returning = new URL(request.url).searchParams.has('plan_handle');
+
+  const [plan, offers] = await Promise.all([
+    returning
+      ? refreshPlan(admin, context.env.DB, session.shop)
+      : resolvePlan(admin, context.env.DB, session.shop),
     listOffers(context.env.DB, session.shop),
   ]);
 
-  const plan = (shop?.plan ?? 'free') as PlanName;
+  const live = offers.filter((o) => o.status === 'PUBLISHED').length;
+
   return {
     plan,
     caps: planCaps(plan),
-    liveOffers: offers.filter((o) => o.status === 'PUBLISHED').length,
-    // The store handle, for the hosted pricing page.
+    liveOffers: live,
+    justChanged: returning,
+    /*
+     * Grandfathering, made visible.
+     *
+     * A downgrade never stops a running offer — silently breaking a live
+     * storefront promotion earns a one-star review that never comes off. So
+     * more offers can be live than the plan allows, and the merchant is told
+     * rather than corrected.
+     */
+    overCap: live > planCaps(plan).activeOffers,
     handle: session.shop.replace('.myshopify.com', ''),
+    appHandle: context.env.SHOPIFY_APP_HANDLE ?? 'cartbloom',
   };
 };
 
@@ -47,14 +68,29 @@ const LABELS: Record<PlanName, string> = {
 };
 
 export default function Plan() {
-  const { plan, caps, liveOffers, handle } = useLoaderData<typeof loader>();
+  const { plan, caps, liveOffers, handle, appHandle, justChanged, overCap } =
+    useLoaderData<typeof loader>();
 
   // Shopify's own plan page. Building our own would mean handling charges,
   // proration and cancellation, all of which Shopify already does correctly.
-  const pricingUrl = `https://admin.shopify.com/store/${handle}/charges/cartbloom/pricing_plans`;
+  const pricingUrl = `https://admin.shopify.com/store/${handle}/charges/${appHandle}/pricing_plans`;
 
   return (
     <s-page heading="Plan">
+      {justChanged && (
+        <s-section>
+          <s-banner tone="success">{`You are now on ${LABELS[plan]}.`}</s-banner>
+        </s-section>
+      )}
+
+      {overCap && (
+        <s-section>
+          <s-banner tone="warning" heading="More offers are live than your plan allows">
+            {`Your ${liveOffers} live offers keep running — nothing on your storefront has changed. You will not be able to publish or edit an offer until you pause enough to be within ${caps.activeOffers}, or move to a larger plan.`}
+          </s-banner>
+        </s-section>
+      )}
+
       <s-section>
         <s-stack direction="inline" gap="base" justifyContent="space-between" alignItems="center">
           <s-stack gap="none">

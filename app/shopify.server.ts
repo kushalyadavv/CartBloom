@@ -27,6 +27,12 @@ export interface Env {
   SHOPIFY_API_SECRET: string;
   SHOPIFY_APP_URL: string;
   SCOPES?: string;
+  /**
+   * The app's handle, as it appears in admin URLs (/apps/<handle>). Only used
+   * to build the link to Shopify's hosted pricing page. Configurable because
+   * getting it wrong sends merchants to a 404 on the one page that takes money.
+   */
+  SHOPIFY_APP_HANDLE?: string;
   SHOP_CUSTOM_DOMAIN?: string;
 }
 

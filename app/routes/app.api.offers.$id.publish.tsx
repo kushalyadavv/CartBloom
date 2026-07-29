@@ -27,6 +27,7 @@ import {
 } from '../db.server';
 import { compile } from '../lib/compile';
 import type { OfferDraft } from '../lib/offer-draft';
+import { refreshPlan } from '../lib/plan.server';
 import { checkPublish } from '../lib/publish-checks';
 import {
   ensureDiscountNode,
@@ -81,7 +82,10 @@ export const action = async ({ request, params, context }: ActionFunctionArgs) =
     // 3. Check. Nothing has been written yet.
     const check = checkPublish(live, {
       activeDrafts,
-      plan: shopRecord?.plan ?? 'free',
+      // Read fresh at publish. This is the moment the cap actually bites, and
+      // a five-minute stale plan here means either blocking a merchant who has
+      // just upgraded or letting through a publish they no longer pay for.
+      plan: await refreshPlan(admin, db, session.shop),
       compiled,
       unbuyableVariants: resolved.unbuyable,
     });
