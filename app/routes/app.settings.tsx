@@ -9,18 +9,28 @@
 
 import { useState } from 'react';
 import type { LoaderFunctionArgs } from 'react-router';
-import { useLoaderData } from 'react-router';
+import { useLoaderData, useRevalidator } from 'react-router';
 
-import { getShop } from '../db.server';
+import { getShop, listPublishedVersions } from '../db.server';
+import { authenticatedFetch } from '../lib/authenticated-fetch';
 import { API_VERSION } from '../shopify.server';
 
 const ANCHOR_SNIPPET = '<div data-cartbloom-anchor></div>';
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const { session } = await context.shopify.authenticate.admin(request);
-  const shop = await getShop(context.env.DB, session.shop);
+  const [shop, versions] = await Promise.all([
+    getShop(context.env.DB, session.shop),
+    listPublishedVersions(context.env.DB, session.shop),
+  ]);
 
   return {
+    versions: versions.map((v, i) => ({
+      versionHash: v.versionHash,
+      publishedAt: v.publishedAt,
+      offerCount: ((v.payload as { widget?: { offers?: unknown[] } }).widget?.offers ?? []).length,
+      current: i === 0,
+    })),
     shop: session.shop,
     handle: session.shop.replace('.myshopify.com', ''),
     installedAt: shop?.webhooksRegisteredAt ?? null,
@@ -30,8 +40,38 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 };
 
 export default function Settings() {
-  const { shop, handle, hasDiscountNode, apiVersion } = useLoaderData<typeof loader>();
+  const { shop, handle, hasDiscountNode, apiVersion, versions } = useLoaderData<typeof loader>();
+  const revalidator = useRevalidator();
   const [copied, setCopied] = useState(false);
+  const [restoring, setRestoring] = useState<string | null>(null);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+
+  const restore = async (versionHash: string) => {
+    if (
+      !window.confirm(
+        'Put this version back on your storefront? Your saved offers are not changed — only what shoppers see.'
+      )
+    ) {
+      return;
+    }
+
+    setRestoring(versionHash);
+    setRestoreError(null);
+    try {
+      const response = await authenticatedFetch('/app/api/versions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ versionHash }),
+      });
+      const body = (await response.json()) as { errors?: string[] };
+      if (!response.ok) throw new Error(body.errors?.[0] ?? 'Could not restore that version');
+      revalidator.revalidate();
+    } catch (e) {
+      setRestoreError(e instanceof Error ? e.message : 'Could not restore that version');
+    } finally {
+      setRestoring(null);
+    }
+  };
 
   const copy = () => {
     void navigator.clipboard?.writeText(ANCHOR_SNIPPET);
@@ -80,6 +120,54 @@ export default function Settings() {
               : 'No discount yet. Publish an offer and CartBloom will create one.'}
           </s-list-item>
         </s-unordered-list>
+      </s-section>
+
+      <s-section heading="Publish history">
+        <s-stack gap="base">
+          {restoreError !== null && <s-banner tone="critical">{restoreError}</s-banner>}
+
+          {versions.length === 0 ? (
+            <s-paragraph>Nothing published yet.</s-paragraph>
+          ) : (
+            <>
+              <s-paragraph>
+                Every publish is kept. Restoring puts that version back on your storefront — your
+                saved offers are left exactly as they are, so this undoes what shoppers see
+                without touching what you have been editing.
+              </s-paragraph>
+
+              {versions.map((v) => (
+                <s-box key={v.versionHash} padding="base" borderWidth="base" borderRadius="base">
+                  <s-stack
+                    direction="inline"
+                    gap="base"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
+                    <s-stack gap="none">
+                      <s-stack direction="inline" gap="small" alignItems="center">
+                        <s-text>{new Date(v.publishedAt).toLocaleString()}</s-text>
+                        {v.current && <s-badge tone="success">Live</s-badge>}
+                      </s-stack>
+                      <s-text tone="neutral">
+                        {`${v.offerCount} ${v.offerCount === 1 ? 'offer' : 'offers'} · ${v.versionHash}`}
+                      </s-text>
+                    </s-stack>
+
+                    {!v.current && (
+                      <s-button
+                        onClick={() => restore(v.versionHash)}
+                        loading={restoring === v.versionHash || undefined}
+                      >
+                        Restore
+                      </s-button>
+                    )}
+                  </s-stack>
+                </s-box>
+              ))}
+            </>
+          )}
+        </s-stack>
       </s-section>
 
       <s-section heading="What CartBloom stores">

@@ -210,3 +210,56 @@ export async function purgeShop(db: D1Database, shop: string): Promise<void> {
     db.prepare('DELETE FROM shops WHERE shop = ?').bind(shop),
   ]);
 }
+
+export interface PublishedVersion {
+  versionHash: string;
+  publishedAt: number;
+  payload: unknown;
+}
+
+/**
+ * Publish history, newest first.
+ *
+ * Capped because this feeds a UI and nobody restores their eightieth version.
+ * The rows are kept — the cap is on what is read, not what is stored.
+ */
+export async function listPublishedVersions(
+  db: D1Database,
+  shop: string,
+  limit = 10
+): Promise<PublishedVersion[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT version_hash, payload, published_at FROM published_versions
+       WHERE shop = ? ORDER BY published_at DESC LIMIT ?`
+    )
+    .bind(shop, limit)
+    .all<{ version_hash: string; payload: string; published_at: number }>();
+
+  return results.map((r) => ({
+    versionHash: r.version_hash,
+    publishedAt: r.published_at,
+    payload: JSON.parse(r.payload),
+  }));
+}
+
+export async function getPublishedVersion(
+  db: D1Database,
+  shop: string,
+  versionHash: string
+): Promise<PublishedVersion | null> {
+  const row = await db
+    .prepare(
+      `SELECT version_hash, payload, published_at FROM published_versions
+       WHERE shop = ? AND version_hash = ?`
+    )
+    .bind(shop, versionHash)
+    .first<{ version_hash: string; payload: string; published_at: number }>();
+
+  if (row === null) return null;
+  return {
+    versionHash: row.version_hash,
+    publishedAt: row.published_at,
+    payload: JSON.parse(row.payload),
+  };
+}

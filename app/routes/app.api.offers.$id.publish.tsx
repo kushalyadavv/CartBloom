@@ -108,6 +108,9 @@ export const action = async ({ request, params, context }: ActionFunctionArgs) =
       compact: compiled.compact,
       inputVariables: compiled.inputVariables,
       widget: compiled.widget,
+      // Stored so a restore writes back exactly what was live, rather than
+      // re-deriving classes from a payload that may since have been edited.
+      discountClasses: compiled.discountClasses,
     });
 
     await saveOffer(db, session.shop, {

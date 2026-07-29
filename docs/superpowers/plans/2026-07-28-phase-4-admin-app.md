@@ -153,14 +153,22 @@ Everything here exists because it was observed failing, or because failure is si
 - [x] **Step 1:** Compile drafts into three payloads: **compact config** and **input variables** to the discount node, **verbose config** to the shop metafield. One version hash stamped across all three so drift is detectable.
 - [x] **Step 2:** Create or update **exactly one** automatic app discount per shop via `discountAutomaticAppCreate` / `Update`, idempotent, recording `discount_node_id`. The 25-node cap is shared with every other app the merchant has installed.
 - [x] **Step 3:** Write all three metafields. A partial publish leaves the function and widget disagreeing, which is the divergence the whole project is built to avoid — on failure, restore the previous version.
-- [x] Record the version in `published_versions`. **Rollback is still only stored, not offered** — every publish is recorded under a version hash, but nothing in the UI restores one.
+- [x] **Step 4:** Record the version in `published_versions` and offer one-click rollback.
+
+**Restore writes the stored payloads back verbatim**, rather than recompiling
+from the current drafts — a merchant rolling back is undoing what the drafts now
+say, so recompiling would hand them the state they are trying to escape. The
+drafts are deliberately left untouched: rollback is an emergency control for the
+storefront, not an undo for the editor. A restore is not recorded as a new
+version, or the version being escaped would move one step further away each
+time.
 - [x] **Step 5:** Commit.
 
 ## Task 46: Remove the template's demo artefacts
 
 - [x] **Step 1:** Delete the scaffold's example routes, the demo product mutation, and any remaining Prisma references.
-- [ ] **Step 2:** Confirm `shopify.app.toml` scopes are still `write_discounts,read_products` and nothing widened them.
-- [ ] **Step 3:** Nav icon: 16×16 SVG, single colour `currentColor`, transparent, no Shopify branding.
+- [x] **Step 2:** Verified: still exactly `write_discounts,read_products`.
+- [x] **Step 3:** `icon.svg` verified against every requirement — 16×16, `currentColor`, no hardcoded colours, transparent, no Shopify branding. **Upload it in the Partner Dashboard**; there is no TOML key for it.
 - [ ] **Step 4:** Commit.
 
 ## Task 47: Plan gating

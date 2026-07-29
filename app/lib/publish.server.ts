@@ -344,7 +344,52 @@ export async function syncStorefront(
     compact: compiled.compact,
     inputVariables: compiled.inputVariables,
     widget: compiled.widget,
+    discountClasses: compiled.discountClasses,
   });
 
   return { version: compiled.version, discountNodeId };
+}
+
+/** A payload as `recordPublish` stored it. */
+export interface RecordedPayload {
+  compact: unknown;
+  inputVariables: unknown;
+  widget: unknown;
+  discountClasses?: string[];
+}
+
+/**
+ * Write a previously published version back to the storefront.
+ *
+ * Restores the stored payloads verbatim rather than recompiling from the
+ * current drafts. That is the whole point: a merchant rolling back is undoing
+ * what the drafts now say, so recompiling would hand them the state they are
+ * trying to escape.
+ *
+ * The drafts in D1 are deliberately left alone. Rollback is an emergency
+ * control for the storefront, not an undo for the editor, and silently
+ * rewriting a merchant's work-in-progress would be a second surprise on top of
+ * the one that sent them here.
+ */
+export async function restoreVersion(
+  admin: Admin,
+  shopId: string,
+  payload: RecordedPayload,
+  existingDiscountNodeId: string | null
+): Promise<string> {
+  const compiled = {
+    compact: payload.compact,
+    compactJson: JSON.stringify(payload.compact),
+    inputVariables: payload.inputVariables,
+    widget: payload.widget,
+    // Versions recorded before discount classes were stored fall back to all
+    // three. Declaring one too many is harmless; declaring too few would make
+    // the node reject discounts the function returns.
+    discountClasses: (payload.discountClasses ?? ['ORDER', 'PRODUCT', 'SHIPPING']) as never,
+    version: 'restore',
+  } as unknown as CompiledPublish;
+
+  const discountNodeId = await ensureDiscountNode(admin, existingDiscountNodeId, compiled);
+  await writeWidgetConfig(admin, shopId, compiled);
+  return discountNodeId;
 }
