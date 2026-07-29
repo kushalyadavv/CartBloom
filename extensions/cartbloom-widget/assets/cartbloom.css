@@ -593,9 +593,20 @@
 
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
   .cb-modal__backdrop {
-    background: rgba(0, 0, 0, 0.32);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
+    /*
+     * Heavy blur, almost no darkening.
+     *
+     * The separation comes from defocusing the page, not from dimming it: at
+     * 20px nothing behind is legible enough to compete, so the scrim only has
+     * to kill the last of the contrast. A dark scrim on top of this reads as
+     * "the store switched off" rather than "the store is behind this".
+     *
+     * Saturation is nudged up because a large blur averages colour toward grey,
+     * and a merchant's brand should still be recognisable through it.
+     */
+    background: rgba(0, 0, 0, 0.12);
+    -webkit-backdrop-filter: blur(20px) saturate(1.15);
+    backdrop-filter: blur(20px) saturate(1.15);
   }
 }
 
