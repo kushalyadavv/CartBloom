@@ -7,7 +7,7 @@
  * than leaving it to support.
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 
 import type { OfferDraft } from '../../lib/offer-draft';
 import { useFieldEvents } from '../../lib/use-field-events';
@@ -16,9 +16,6 @@ interface Props {
   draft: OfferDraft;
   update: (patch: Partial<OfferDraft>) => void;
 }
-
-/** Honoured by widget/src/mount.ts, which prefers it over every guess. */
-const ANCHOR_SNIPPET = '<div data-cartbloom-anchor></div>';
 
 export function StepPlacement({ draft, update }: Props) {
   const ref = useRef<HTMLDivElement>(null);
@@ -32,13 +29,6 @@ export function StepPlacement({ draft, update }: Props) {
   );
 
   useFieldEvents(ref, onField);
-
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    void navigator.clipboard?.writeText(ANCHOR_SNIPPET);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div ref={ref}>
@@ -65,29 +55,29 @@ export function StepPlacement({ draft, update }: Props) {
         <s-divider />
         <s-heading>Put it somewhere specific</s-heading>
         <s-paragraph>
-          CartBloom finds the right spot in most themes on its own. If yours puts it in an odd
-          place, paste this line into your theme where you want it — CartBloom will use it instead
-          of guessing.
+          CartBloom finds the right spot in most themes on its own. If yours puts it somewhere
+          unexpected, you can name the element it should attach to in the theme editor — there is
+          no theme code to edit.
         </s-paragraph>
 
         {/*
-          The widget already honours [data-cartbloom-anchor] and prefers it over
-          every automatic strategy; this only surfaces it. Themes that build the
-          drawer from a section this cannot reach are the reason the automatic
-          path exists, and the reason this escape hatch does.
+          The setting lives on the app embed block, so a merchant configures
+          placement from the theme editor rather than pasting a snippet into
+          their theme. App Store review treats any instruction to hand-edit
+          theme code as a failure, however small the snippet.
         */}
-        <s-box padding="base" borderWidth="base" borderRadius="base">
-          <s-stack gap="small">
-            <code style={{ userSelect: 'all', wordBreak: 'break-all', fontSize: '0.85em' }}>
-              {ANCHOR_SNIPPET}
-            </code>
-            <s-button onClick={copy}>{copied ? 'Copied' : 'Copy'}</s-button>
-          </s-stack>
-        </s-box>
+        <s-ordered-list>
+          <s-list-item>Open the theme editor and go to App embeds.</s-list-item>
+          <s-list-item>Expand CartBloom progress bar.</s-list-item>
+          <s-list-item>
+            Under Placement, enter a CSS selector for the element to attach to — your cart
+            drawer&apos;s heading is the usual choice — and pick whether the bar sits above it,
+            below it, or inside it.
+          </s-list-item>
+        </s-ordered-list>
 
         <s-paragraph>
-          Usual spot: your cart drawer snippet, just below the drawer&apos;s heading. The offer
-          still has to be published, and the placement toggles above still apply.
+          The offer still has to be published, and the placement toggles above still apply.
         </s-paragraph>
       </s-stack>
     </div>

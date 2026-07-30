@@ -307,3 +307,100 @@ describe('findDrawerMount — empty cart', () => {
     stop();
   });
 });
+
+describe('merchant-configured placement', () => {
+  beforeEach(() => {
+    document.body.innerHTML = HORIZON;
+  });
+
+  it('outranks every heuristic when the selector resolves', () => {
+    const result = findDrawerMount(document, { selector: '.cart-drawer__items' });
+
+    expect(result.reason).toBe('configured');
+    // Placed relative to the named element, not the header the heuristics
+    // would otherwise have chosen.
+    expect(result.host?.previousElementSibling?.className).toBe('cart-drawer__items');
+  });
+
+  it('places above, inside-top and inside-bottom on request', () => {
+    const before = findDrawerMount(document, {
+      selector: '.cart-drawer__items',
+      position: 'before',
+    });
+    expect(before.host?.nextElementSibling?.className).toBe('cart-drawer__items');
+
+    document.body.innerHTML = HORIZON;
+    const prepend = findDrawerMount(document, {
+      selector: '.cart-drawer__items',
+      position: 'prepend',
+    });
+    expect(prepend.host?.parentElement?.className).toBe('cart-drawer__items');
+
+    document.body.innerHTML = HORIZON;
+    const append = findDrawerMount(document, {
+      selector: '.cart-drawer__items',
+      position: 'append',
+    });
+    expect(append.host?.parentElement?.className).toBe('cart-drawer__items');
+  });
+
+  it('falls back to automatic placement when the selector matches nothing', () => {
+    // A merchant mid-typing in the theme editor must not lose the widget.
+    const result = findDrawerMount(document, { selector: '.does-not-exist' });
+
+    expect(result.reason).not.toBe('configured');
+    expect(result.host).not.toBeNull();
+  });
+
+  it('survives an invalid selector rather than throwing', () => {
+    const result = findDrawerMount(document, { selector: ':::not valid:::' });
+
+    expect(result.host).not.toBeNull();
+    expect(result.reason).not.toBe('configured');
+  });
+
+  it('ignores an empty or whitespace-only selector', () => {
+    expect(findDrawerMount(document, { selector: '' }).reason).not.toBe('configured');
+    expect(findDrawerMount(document, { selector: '   ' }).reason).not.toBe('configured');
+  });
+
+  it('is idempotent — re-mounting does not stack hosts', () => {
+    findDrawerMount(document, { selector: '.cart-drawer__items' });
+    findDrawerMount(document, { selector: '.cart-drawer__items' });
+
+    expect(document.querySelectorAll('[data-cartbloom-host]')).toHaveLength(1);
+  });
+});
+
+describe('configured placement over an existing mount', () => {
+  beforeEach(() => {
+    document.body.innerHTML = HORIZON;
+  });
+
+  it('moves a host the heuristics already placed', () => {
+    // The widget mounts on first paint, so by the time a merchant saves a
+    // placement selector a host usually exists already. Reusing it wherever it
+    // sits would make the setting look broken.
+    const automatic = findDrawerMount();
+    expect(automatic.host).not.toBeNull();
+    expect(automatic.reason).not.toBe('configured');
+
+    const configured = findDrawerMount(document, { selector: '.cart-drawer__items' });
+
+    expect(configured.reason).toBe('configured');
+    expect(configured.host?.previousElementSibling?.className).toBe('cart-drawer__items');
+    // Moved, not duplicated.
+    expect(document.querySelectorAll('[data-cartbloom-host]')).toHaveLength(1);
+  });
+
+  it('leaves a correctly placed host alone, so focus inside it survives', () => {
+    const first = findDrawerMount(document, { selector: '.cart-drawer__items' });
+    const button = document.createElement('button');
+    first.host?.appendChild(button);
+    button.focus();
+
+    findDrawerMount(document, { selector: '.cart-drawer__items' });
+
+    expect(document.activeElement).toBe(button);
+  });
+});

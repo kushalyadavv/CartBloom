@@ -15,8 +15,6 @@ import { getShop, listPublishedVersions } from '../db.server';
 import { authenticatedFetch } from '../lib/authenticated-fetch';
 import { API_VERSION } from '../shopify.server';
 
-const ANCHOR_SNIPPET = '<div data-cartbloom-anchor></div>';
-
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const { session } = await context.shopify.authenticate.admin(request);
   const [shop, versions] = await Promise.all([
@@ -42,7 +40,6 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 export default function Settings() {
   const { shop, handle, hasDiscountNode, apiVersion, versions } = useLoaderData<typeof loader>();
   const revalidator = useRevalidator();
-  const [copied, setCopied] = useState(false);
   const [restoring, setRestoring] = useState<string | null>(null);
   const [restoreError, setRestoreError] = useState<string | null>(null);
 
@@ -73,12 +70,6 @@ export default function Settings() {
     }
   };
 
-  const copy = () => {
-    void navigator.clipboard?.writeText(ANCHOR_SNIPPET);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const themeEditor = `https://admin.shopify.com/store/${handle}/themes/current/editor?context=apps`;
 
   return (
@@ -95,18 +86,23 @@ export default function Settings() {
         </s-stack>
       </s-section>
 
-      <s-section heading="Place it manually">
+      <s-section heading="Put it somewhere specific">
         <s-stack gap="base">
           <s-paragraph>
-            CartBloom finds the right spot in most themes on its own. If yours puts it somewhere
-            odd, paste this where you want it and CartBloom will use it instead of guessing.
+            CartBloom finds the right spot in most themes on its own. If it appears somewhere
+            unexpected, you can name the element it should attach to — no theme code to edit.
           </s-paragraph>
-          <s-box padding="base" borderWidth="base" borderRadius="base">
-            <s-stack gap="small">
-              <code style={{ userSelect: 'all', fontSize: '0.85em' }}>{ANCHOR_SNIPPET}</code>
-              <s-button onClick={copy}>{copied ? 'Copied' : 'Copy'}</s-button>
-            </s-stack>
-          </s-box>
+          <s-ordered-list>
+            <s-list-item>Open the theme editor and go to App embeds.</s-list-item>
+            <s-list-item>Expand CartBloom progress bar.</s-list-item>
+            <s-list-item>
+              Under Placement, enter a CSS selector for the element to attach to, and choose
+              whether the bar sits above it, below it, or inside it.
+            </s-list-item>
+          </s-ordered-list>
+          <s-link href={themeEditor} target="_blank">
+            <s-button>Open theme editor</s-button>
+          </s-link>
         </s-stack>
       </s-section>
 

@@ -17,7 +17,7 @@ import {
   type OfferEntitlements,
 } from '../../app/entitlement';
 import { onCartChange, fetchCart, refreshCartSections, applySections, sectionsToRequest, type AjaxCart, type AjaxCartLine } from './cart';
-import { keepMounted, findDrawerMount, type MountResult } from './mount';
+import { keepMounted, findDrawerMount, type MountResult, type Placement } from './mount';
 import { renderOffer, renderRewardCard, renderRewards, renderModal, type RenderOffer, type GiftDisplay } from './render';
 import { MutationQueue, addGift, removeLine, swapGift, type CartRoutes } from './mutate';
 import { reconcile, removalMessage, selectedVariant, type ClaimedLine } from './claim';
@@ -39,6 +39,8 @@ interface WidgetConfig {
   moneyFormat?: string;
   /** The shop's default currency, for comparison against the cart's. */
   currency?: string;
+  /** Where the merchant asked for the widget, set in the theme editor. */
+  placement?: Placement;
   routes?: CartRoutes;
 }
 
@@ -273,7 +275,7 @@ function boot(): void {
 
         for (const el of [...hosts.keys()]) if (!el.isConnected) hosts.delete(el);
         adoptDeclaredHosts();
-        attach(findDrawerMount());
+        attach(findDrawerMount(document, config.placement));
         paint(await fetchCart(cartUrl));
       })
       .catch(() => {
@@ -458,7 +460,7 @@ function boot(): void {
 
         for (const el of [...hosts.keys()]) if (!el.isConnected) hosts.delete(el);
         adoptDeclaredHosts();
-        attach(findDrawerMount());
+        attach(findDrawerMount(document, config.placement));
         paint(await fetchCart(cartUrl));
       })
       .catch(() => {
@@ -483,7 +485,7 @@ function boot(): void {
   keepMounted((result: MountResult) => {
     attach(result);
     void fetchCart(cartUrl).then(paint);
-  });
+  }, config.placement);
 
   onCartChange(sync, cartUrl);
 }

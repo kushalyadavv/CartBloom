@@ -41,6 +41,18 @@
       cartChange: {{ routes.cart_change_url | json }},
       cart: {{ routes.cart_url | json }}
     };
+
+    {%- comment -%}
+      Placement, configured in the theme editor rather than by editing theme
+      code. App Store review treats "paste this snippet into your theme" as a
+      failure regardless of how small the snippet is, so the escape hatch for
+      themes our heuristics get wrong lives here, as a setting a merchant fills
+      in from the editor.
+    {%- endcomment -%}
+    window.__CARTBLOOM__.placement = {
+      selector: {{ block.settings.placement_selector | default: '' | json }},
+      position: {{ block.settings.placement_position | default: 'after' | json }}
+    };
   </script>
 
   {{ 'cartbloom.css' | asset_url | stylesheet_tag }}
@@ -58,6 +70,33 @@
 {
   "name": "CartBloom progress bar",
   "target": "body",
-  "settings": []
+  "settings": [
+    {
+      "type": "header",
+      "content": "Placement"
+    },
+    {
+      "type": "paragraph",
+      "content": "CartBloom finds your cart drawer on its own in most themes. If the bar appears somewhere unexpected, name the element it should attach to and CartBloom will use that instead."
+    },
+    {
+      "type": "text",
+      "id": "placement_selector",
+      "label": "Attach to element",
+      "info": "A CSS selector, for example .drawer__header or #CartDrawer .cart-items. Leave empty to place it automatically."
+    },
+    {
+      "type": "select",
+      "id": "placement_position",
+      "label": "Position",
+      "options": [
+        { "value": "after", "label": "Below that element" },
+        { "value": "before", "label": "Above that element" },
+        { "value": "prepend", "label": "Inside it, at the top" },
+        { "value": "append", "label": "Inside it, at the bottom" }
+      ],
+      "default": "after"
+    }
+  ]
 }
 {% endschema %}

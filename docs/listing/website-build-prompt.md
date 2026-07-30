@@ -75,8 +75,9 @@ Core capabilities, all shipped:
    zero past the top tier and watches tiers unlock and the gift chooser appear —
    confirming a configuration without placing a test order. The preview runs the
    real storefront rendering code, so it cannot drift from what shoppers see.
-6. **Placement** in the cart drawer and on the cart page, with a copyable snippet
-   for themes that need the widget positioned by hand.
+6. **Placement** in the cart drawer and on the cart page. Where a theme needs the
+   bar somewhere specific, the merchant names the element in the theme editor —
+   there is no theme code to edit.
 7. **A six-step setup wizard** — Trigger, Tiers, Gifts, Design, Placement,
    Review — where the Review step states the offer back in plain language
    ("Customers keep the gift from every tier they unlock") rather than echoing

@@ -14,7 +14,20 @@
  * merchant drags into place (Task 35), which is strictly better where it works.
  */
 
-export type MountReason = 'anchor' | 'standard' | 'theme-selector' | 'none';
+export type MountReason = 'configured' | 'anchor' | 'standard' | 'theme-selector' | 'none';
+
+/**
+ * Where the merchant asked for the widget, set in the theme editor.
+ *
+ * This is the supported escape hatch for themes the heuristics below get
+ * wrong. It lives in the app embed's settings rather than as a snippet a
+ * merchant pastes into their theme, because App Store review treats any
+ * instruction to hand-edit theme code as a failure — see requirement 5.1.1.
+ */
+export interface Placement {
+  selector?: string;
+  position?: 'before' | 'after' | 'prepend' | 'append';
+}
 
 export interface MountResult {
   host: HTMLElement | null;
@@ -22,10 +35,13 @@ export interface MountResult {
 }
 
 /**
- * A merchant-pasted anchor wins over everything.
+ * An anchor element, for themes built by a developer rather than configured by
+ * a merchant.
  *
- * If someone went to the trouble of editing their theme to say "put it here",
- * no heuristic of ours should second-guess them.
+ * Deliberately undocumented in the app's own UI. It works, and someone writing
+ * their own theme may reasonably use it, but instructing merchants to paste it
+ * would fail review. The theme-editor `Placement` setting is what merchants are
+ * pointed at instead.
  */
 const ANCHOR_SELECTOR = '[data-cartbloom-anchor]';
 
@@ -120,6 +136,85 @@ function firstMatch(root: ParentNode, selectors: string[]): HTMLElement | null {
   return null;
 }
 
+/**
+ * Honour the merchant's configured placement, if it resolves.
+ *
+ * Returns null rather than throwing on a selector that matches nothing: a
+ * merchant mid-typing in the theme editor, or one whose theme changed under
+ * them, should fall through to the automatic placement rather than lose the
+ * widget entirely. A wrong selector degrades to the default; it never blanks
+ * the cart.
+ */
+function configuredMount(root: ParentNode, placement: Placement | undefined): HTMLElement | null {
+  const selector = placement?.selector?.trim();
+  if (selector === undefined || selector === '') return null;
+
+  let target: Element | null = null;
+  try {
+    target = root.querySelector(selector);
+  } catch {
+    // An invalid selector is a typo, not a crash.
+    return null;
+  }
+  if (target === null) return null;
+
+  const position = placement?.position ?? 'after';
+
+  /*
+   * Reuse the host we already own — but move it if it is not where the merchant
+   * asked for it.
+   *
+   * Without the move, a host placed by the automatic heuristics before the
+   * setting was saved would pin the widget to the wrong spot permanently: the
+   * merchant sets a selector, nothing changes, and the setting looks broken.
+   * The widget mounts on first paint, so that ordering is the common case, not
+   * an edge one.
+   */
+  const existing = document.querySelector<HTMLElement>('[data-cartbloom-host]');
+  const host = existing ?? newHost();
+
+  // Only when it is actually misplaced. Re-inserting on every mount check would
+  // detach and re-attach the node each time, destroying focus inside it.
+  if (!isPlacedAt(host, target, position)) {
+    switch (position) {
+      case 'before':
+        target.insertAdjacentElement('beforebegin', host);
+        break;
+      case 'prepend':
+        target.prepend(host);
+        break;
+      case 'append':
+        target.appendChild(host);
+        break;
+      default:
+        target.insertAdjacentElement('afterend', host);
+        break;
+    }
+  }
+
+  return host;
+}
+
+function isPlacedAt(host: HTMLElement, target: Element, position: string): boolean {
+  switch (position) {
+    case 'before':
+      return host.nextElementSibling === target;
+    case 'prepend':
+      return host.parentElement === target && target.firstElementChild === host;
+    case 'append':
+      return host.parentElement === target && target.lastElementChild === host;
+    default:
+      return host.previousElementSibling === target;
+  }
+}
+
+function newHost(): HTMLElement {
+  const host = document.createElement('div');
+  host.setAttribute('data-cartbloom-host', '');
+  return host;
+}
+
+
 /** An element the widget owns, so re-mounting is idempotent. */
 function ensureHost(parent: Element, before: Element | null): HTMLElement {
   const existing = parent.querySelector<HTMLElement>(':scope > [data-cartbloom-host]');
@@ -142,7 +237,14 @@ function ensureHost(parent: Element, before: Element | null): HTMLElement {
  * drawer lazily and it simply does not exist until the shopper opens the cart.
  * That is what `observeForMount` is for.
  */
-export function findDrawerMount(root: ParentNode = document): MountResult {
+export function findDrawerMount(
+  root: ParentNode = document,
+  placement?: Placement
+): MountResult {
+  // The merchant's own instruction outranks every heuristic here.
+  const configured = configuredMount(root, placement);
+  if (configured !== null) return { host: configured, reason: 'configured' };
+
   const anchor = root.querySelector<HTMLElement>(ANCHOR_SELECTOR);
   if (anchor !== null) return { host: anchor, reason: 'anchor' };
 
@@ -212,7 +314,10 @@ export function findDrawerMount(root: ParentNode = document): MountResult {
  * actually happened, and `findDrawerMount` is a handful of `querySelector`
  * calls guarded by an early exit.
  */
-export function keepMounted(onMounted: (result: MountResult) => void): () => void {
+export function keepMounted(
+  onMounted: (result: MountResult) => void,
+  placement?: Placement
+): () => void {
   let current: HTMLElement | null = null;
 
   const ensure = (): void => {
@@ -220,7 +325,7 @@ export function keepMounted(onMounted: (result: MountResult) => void): () => voi
     // and keeps the observer cheap.
     if (current !== null && current.isConnected) return;
 
-    const result = findDrawerMount();
+    const result = findDrawerMount(document, placement);
     if (result.host === null) return;
 
     current = result.host;
