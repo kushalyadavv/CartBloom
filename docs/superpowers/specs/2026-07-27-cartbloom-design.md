@@ -379,7 +379,7 @@ The preview must render the **real widget code**, not a lookalike. If preview an
 
 ### Plans
 
-| | Free | Growth $9.99 | Pro $19.99 |
+| | Free | Growth $6.99 | Pro $14.99 |
 |---|---|---|---|
 | Active offers | 1 | 5 | 25 |
 | Tiers per offer | 3 | 6 | 12 |

@@ -128,7 +128,7 @@ volume. Say that explicitly; it is a selling point.
 
 | | **Free** | **Growth** | **Pro** |
 |---|---|---|---|
-| Price | $0 | **$9.99/mo** | **$19.99/mo** |
+| Price | $0 | **$6.99/mo** | **$14.99/mo** |
 | Live offers | 1 | 5 | 25 |
 | Tiers per offer | 3 | 6 | 12 |
 | Draft offers | Unlimited | Unlimited | Unlimited |

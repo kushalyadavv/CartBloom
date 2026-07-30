@@ -94,8 +94,8 @@ readily as one that under-claims.
 | Plan | Price | Live offers | Tiers per offer |
 |---|---|---|---|
 | Free | Free | 1 | 3 |
-| Growth | $9.99 / month | 5 | 6 |
-| Pro | $19.99 / month | 25 | 12 |
+| Growth | $6.99 / month | 5 | 6 |
+| Pro | $14.99 / month | 25 | 12 |
 
 Every plan includes all design, gift and claim-policy features. Drafts are
 unlimited on every plan.

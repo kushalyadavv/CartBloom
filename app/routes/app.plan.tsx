@@ -54,8 +54,8 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 
 const PRICES: Record<PlanName, string> = {
   free: 'Free',
-  growth: '$9.99 / month',
-  pro: '$19.99 / month',
+  growth: '$6.99 / month',
+  pro: '$14.99 / month',
 };
 
 /** Cheapest first, so the ladder reads left to right. */
