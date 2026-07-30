@@ -129,19 +129,25 @@ volume. Say that explicitly; it is a selling point.
 | | **Free** | **Growth** | **Pro** |
 |---|---|---|---|
 | Price | $0 | **$6.99/mo** | **$14.99/mo** |
+| Free trial | — | **7 days** | **7 days** |
 | Live offers | 1 | 5 | 25 |
 | Tiers per offer | 3 | 6 | 12 |
 | Draft offers | Unlimited | Unlimited | Unlimited |
 | Every design, gift and claim-rule feature | ✓ | ✓ | ✓ |
 
 - Mark **Growth** as the recommended plan.
+- State that Growth and Pro both include a **7-day free trial**, no card
+  charged until it ends. Free has no trial because it is not a subscription —
+  it is simply free forever.
 - State that billing is handled by Shopify and appears on the merchant's regular
   Shopify invoice.
 - State that downgrading never stops a running offer — existing offers keep
   working; only publishing new ones past the new limit is paused. **This is true
   and it is reassuring, so say it.**
 - FAQ below the table: *How does billing work?* *What happens if I downgrade?*
-  *Is there a free trial?* (the Free plan is permanent, not a trial).
+  *Is there a free trial?* (yes — 7 days on Growth and Pro, and the Free plan
+  itself never expires, so there is always a no-cost way to keep using CartBloom
+  after the trial).
 
 ### Privacy Policy page
 

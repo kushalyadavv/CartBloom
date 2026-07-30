@@ -91,14 +91,20 @@ readily as one that under-claims.
 
 ## 3. Pricing details
 
-| Plan | Price | Live offers | Tiers per offer |
-|---|---|---|---|
-| Free | Free | 1 | 3 |
-| Growth | $6.99 / month | 5 | 6 |
-| Pro | $14.99 / month | 25 | 12 |
+| Plan | Price | Trial | Live offers | Tiers per offer |
+|---|---|---|---|---|
+| Free | Free | — | 1 | 3 |
+| Growth | $6.99 / month | 7 days free | 5 | 6 |
+| Pro | $14.99 / month | 7 days free | 25 | 12 |
 
 Every plan includes all design, gift and claim-policy features. Drafts are
 unlimited on every plan.
+
+**Set Trial days to 7 on Growth and Pro** in the plan editor (Free has no
+subscription, so no trial field applies to it). No app code needs to know the
+trial exists — a merchant who has approved a trial reads as an `ACTIVE`
+subscription from day one, identical to one being billed, so they get full
+plan limits for the whole trial with nothing to configure on our side.
 
 **Set the redirection URL on each plan to `/app/plan`.** Shopify appends
 `plan_handle`, which the app reads to skip its plan cache — without it a merchant

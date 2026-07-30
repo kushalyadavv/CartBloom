@@ -58,6 +58,18 @@ const PRICES: Record<PlanName, string> = {
   pro: '$14.99 / month',
 };
 
+/**
+ * Set as "Trial days" on the plan itself in the Partner Dashboard — this is
+ * display copy only, not something the app enforces. A merchant who has
+ * approved a trial subscription reads as ACTIVE from day one, identical to one
+ * being billed, so the caps already apply for the whole trial with nothing
+ * else to configure here.
+ */
+const TRIALS: Partial<Record<PlanName, string>> = {
+  growth: '7-day free trial',
+  pro: '7-day free trial',
+};
+
 /** Cheapest first, so the ladder reads left to right. */
 const ORDER: PlanName[] = ['free', 'growth', 'pro'];
 
@@ -133,6 +145,9 @@ export default function Plan() {
                       {current && <s-badge tone="success">Current</s-badge>}
                     </s-stack>
                     <s-text tone="neutral">{PRICES[name]}</s-text>
+                    {TRIALS[name] !== undefined && (
+                      <s-text tone="success">{TRIALS[name]}</s-text>
+                    )}
                   </s-stack>
 
                   <s-unordered-list>
