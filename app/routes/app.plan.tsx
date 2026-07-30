@@ -47,7 +47,6 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
      * rather than corrected.
      */
     overCap: live > planCaps(plan).activeOffers,
-    handle: session.shop.replace('.myshopify.com', ''),
     /*
      * No default. An app handle that is merely plausible is worse than none:
      * `cartbloom` belongs to a different published app, so guessing it sent
@@ -93,15 +92,18 @@ const LABELS: Record<PlanName, string> = {
 };
 
 export default function Plan() {
-  const { plan, caps, liveOffers, handle, appHandle, justChanged, overCap } =
+  const { plan, caps, liveOffers, appHandle, justChanged, overCap } =
     useLoaderData<typeof loader>();
 
   // Shopify's own plan page. Building our own would mean handling charges,
   // proration and cancellation, all of which Shopify already does correctly.
-  const pricingUrl =
-    appHandle === null
-      ? null
-      : `https://admin.shopify.com/store/${handle}/charges/${appHandle}/pricing_plans`;
+  /*
+   * Same-origin, on purpose. /app/change-plan redirects with target '_top',
+   * which is what escapes the admin iframe — the plan page is outside the
+   * app's scope and a plain external link from inside the frame does not
+   * reliably get there.
+   */
+  const pricingUrl = appHandle === null ? null : '/app/change-plan';
 
   return (
     <s-page heading="Plan">
@@ -137,7 +139,7 @@ export default function Plan() {
             </s-text>
           </s-stack>
           {pricingUrl !== null && (
-            <s-link href={pricingUrl} target="_blank">
+            <s-link href={pricingUrl}>
               <s-button variant="primary">Change plan</s-button>
             </s-link>
           )}
@@ -207,7 +209,7 @@ export default function Plan() {
                   ) : pricingUrl === null ? (
                     <s-button disabled>{`Choose ${LABELS[name]}`}</s-button>
                   ) : (
-                    <s-link href={pricingUrl} target="_blank">
+                    <s-link href={pricingUrl}>
                       <s-button variant={recommended ? 'primary' : 'secondary'}>
                         {`Choose ${LABELS[name]}`}
                       </s-button>
