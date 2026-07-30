@@ -48,7 +48,13 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
      */
     overCap: live > planCaps(plan).activeOffers,
     handle: session.shop.replace('.myshopify.com', ''),
-    appHandle: context.env.SHOPIFY_APP_HANDLE ?? 'cartbloom',
+    /*
+     * No default. An app handle that is merely plausible is worse than none:
+     * `cartbloom` belongs to a different published app, so guessing it sent
+     * merchants to a stranger's pricing page and a 404. When it is unset the
+     * page says so instead of linking somewhere wrong.
+     */
+    appHandle: context.env.SHOPIFY_APP_HANDLE ?? null,
   };
 };
 
@@ -65,10 +71,17 @@ const PRICES: Record<PlanName, string> = {
  * being billed, so the caps already apply for the whole trial with nothing
  * else to configure here.
  */
-const TRIALS: Partial<Record<PlanName, string>> = {
+const TRIALS: Record<PlanName, string> = {
+  // Free is not a subscription, so it has no trial — but it still gets a line
+  // here. Omitting it shortens the card and the three stop aligning, which
+  // reads as a rendering bug rather than as a meaningful difference.
+  free: 'Free forever',
   growth: '7-day free trial',
   pro: '7-day free trial',
 };
+
+/** The plan most merchants should land on, called out rather than left to chance. */
+const RECOMMENDED: PlanName = 'growth';
 
 /** Cheapest first, so the ladder reads left to right. */
 const ORDER: PlanName[] = ['free', 'growth', 'pro'];
@@ -85,10 +98,22 @@ export default function Plan() {
 
   // Shopify's own plan page. Building our own would mean handling charges,
   // proration and cancellation, all of which Shopify already does correctly.
-  const pricingUrl = `https://admin.shopify.com/store/${handle}/charges/${appHandle}/pricing_plans`;
+  const pricingUrl =
+    appHandle === null
+      ? null
+      : `https://admin.shopify.com/store/${handle}/charges/${appHandle}/pricing_plans`;
 
   return (
     <s-page heading="Plan">
+      {pricingUrl === null && (
+        <s-section>
+          <s-banner tone="critical" heading="Plan changes are unavailable">
+            CartBloom is missing its app handle, so it cannot link to your plan page. This is a
+            configuration problem on our side, not something you can fix — please contact support.
+          </s-banner>
+        </s-section>
+      )}
+
       {justChanged && (
         <s-section>
           <s-banner tone="success">{`You are now on ${LABELS[plan]}.`}</s-banner>
@@ -111,62 +136,81 @@ export default function Plan() {
               {`${liveOffers} of ${caps.activeOffers} live ${caps.activeOffers === 1 ? 'offer' : 'offers'} used · up to ${caps.tiersPerOffer} tiers per offer`}
             </s-text>
           </s-stack>
-          <s-link href={pricingUrl} target="_blank">
-            <s-button variant="primary">Change plan</s-button>
-          </s-link>
+          {pricingUrl !== null && (
+            <s-link href={pricingUrl} target="_blank">
+              <s-button variant="primary">Change plan</s-button>
+            </s-link>
+          )}
         </s-stack>
       </s-section>
 
-      <s-grid gridTemplateColumns="repeat(auto-fit, minmax(240px, 1fr))" gap="base">
+      <s-grid gridTemplateColumns="repeat(auto-fit, minmax(260px, 1fr))" gap="base">
         {ORDER.map((name) => {
           const current = name === plan;
-          const caps = PLAN_CAPS[name];
+          const planCaps = PLAN_CAPS[name];
+          const recommended = name === RECOMMENDED && !current;
 
           return (
             <s-grid-item key={name}>
-              {/* The current plan is filled rather than outlined, so which one
-                  you are on is answerable at a glance instead of by reading
-                  three badges. */}
+              {/*
+                Every card is the same shape: badge row, name, price, trial,
+                four features, one action. Only the emphasis changes. The
+                previous version omitted lines that did not apply, so the three
+                cards ended at different heights and the buttons did not line
+                up.
+              */}
               <s-box
                 padding="large"
-                borderWidth={current ? 'large' : 'base'}
-                borderRadius="base"
+                borderWidth={current || recommended ? 'large' : 'base'}
+                borderRadius="large"
                 background={current ? 'subdued' : undefined}
               >
-                <s-stack gap="base">
-                  <s-stack gap="none">
-                    <s-stack
-                      direction="inline"
-                      gap="small"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
-                      <s-heading>{LABELS[name]}</s-heading>
-                      {current && <s-badge tone="success">Current</s-badge>}
+                <s-stack gap="large">
+                  <s-stack gap="small">
+                    {/* Reserved even when empty, so the name sits on the same
+                        line across all three cards. */}
+                    <s-box minBlockSize="24px">
+                      {current && <s-badge tone="success">Current plan</s-badge>}
+                      {recommended && <s-badge tone="info">Recommended</s-badge>}
+                    </s-box>
+
+                    <s-heading>{LABELS[name]}</s-heading>
+
+                    <s-stack gap="none">
+                      <s-text
+                        {...(name === 'free' ? {} : { tone: 'neutral' as const })}
+                      >
+                        {PRICES[name]}
+                      </s-text>
+                      <s-text tone={name === 'free' ? 'neutral' : 'success'}>
+                        {TRIALS[name]}
+                      </s-text>
                     </s-stack>
-                    <s-text tone="neutral">{PRICES[name]}</s-text>
-                    {TRIALS[name] !== undefined && (
-                      <s-text tone="success">{TRIALS[name]}</s-text>
-                    )}
                   </s-stack>
+
+                  <s-divider />
 
                   <s-unordered-list>
                     <s-list-item>
-                      {`${caps.activeOffers} live ${caps.activeOffers === 1 ? 'offer' : 'offers'}`}
+                      {`${planCaps.activeOffers} live ${planCaps.activeOffers === 1 ? 'offer' : 'offers'}`}
                     </s-list-item>
-                    <s-list-item>{`${caps.tiersPerOffer} tiers per offer`}</s-list-item>
+                    <s-list-item>{`${planCaps.tiersPerOffer} tiers per offer`}</s-list-item>
                     <s-list-item>Unlimited drafts</s-list-item>
                     <s-list-item>Every design and gift feature</s-list-item>
                   </s-unordered-list>
 
-                  {/* Every plan gets an action. A card you cannot act on is a
-                      price list, and the merchant still has to find the button
-                      at the top of the page. */}
+                  {/* Every plan gets an action in the same position. A card you
+                      cannot act on is a price list, and the merchant would have
+                      to go back up the page to find the button. */}
                   {current ? (
-                    <s-button disabled>Your plan</s-button>
+                    <s-button disabled>Your current plan</s-button>
+                  ) : pricingUrl === null ? (
+                    <s-button disabled>{`Choose ${LABELS[name]}`}</s-button>
                   ) : (
                     <s-link href={pricingUrl} target="_blank">
-                      <s-button variant="primary">{`Choose ${LABELS[name]}`}</s-button>
+                      <s-button variant={recommended ? 'primary' : 'secondary'}>
+                        {`Choose ${LABELS[name]}`}
+                      </s-button>
                     </s-link>
                   )}
                 </s-stack>

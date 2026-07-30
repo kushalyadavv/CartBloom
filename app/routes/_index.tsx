@@ -1,11 +1,18 @@
 /**
  * The app's root path.
  *
- * Under managed installation a merchant never lands here with intent — Shopify
- * sends them straight to `/app` inside the admin. The template's version asked
- * for a `.myshopify.com` domain in a text input, which App Store review rejects
- * outright, so there is no form: with a shop param we forward into the app, and
- * without one there is nothing meaningful to show.
+ * Always forwards into the app, and deliberately never off-site.
+ *
+ * Shopify loads this route *inside the admin iframe* when a merchant clicks the
+ * app's own entry in the left nav. An earlier version redirected to
+ * apps.shopify.com when no `shop` param was present, which is exactly what that
+ * click looks like — and the App Store sets X-Frame-Options, so the iframe
+ * rendered "apps.shopify.com refused to connect" and stayed stuck until a full
+ * page reload.
+ *
+ * There is nothing to render here in any case: `/app` authenticates, and if
+ * there is no session it knows how to bounce for a token. Handing that decision
+ * to a route that can answer it beats guessing from a query parameter.
  */
 
 import type { LoaderFunctionArgs } from 'react-router';
@@ -13,8 +20,5 @@ import { redirect } from 'react-router';
 
 export const loader = ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  if (url.searchParams.get('shop')) {
-    throw redirect(`/app?${url.searchParams.toString()}`);
-  }
-  throw redirect('https://apps.shopify.com/');
+  throw redirect(`/app${url.search}`);
 };
