@@ -12,7 +12,7 @@ import type { LoaderFunctionArgs } from 'react-router';
 import { useLoaderData } from 'react-router';
 
 import { listOffers } from '../db.server';
-import { refreshPlan, resolvePlan } from '../lib/plan.server';
+import { planFromHandle, refreshPlan, resolvePlan } from '../lib/plan.server';
 import { PLAN_CAPS, planCaps, type PlanName } from '../lib/offer-draft';
 
 const STORE_KIND_QUERY = `#graphql
@@ -50,11 +50,15 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   // plan_handle set. Inside the cache TTL they would otherwise be looking at
   // their old limits and conclude the upgrade failed, so that return bypasses
   // the cache.
-  const returning = new URL(request.url).searchParams.has('plan_handle');
+  const planHandle = new URL(request.url).searchParams.get('plan_handle');
+  const returning = planHandle !== null;
 
   const [plan, offers] = await Promise.all([
     returning
-      ? refreshPlan(admin, context.env.DB, session.shop)
+      ? // The handle names the plan the merchant just took, so the refresh can
+        // wait for Shopify's own read to agree rather than trusting the first
+        // answer it gets.
+        refreshPlan(admin, context.env.DB, session.shop, planFromHandle(planHandle))
       : resolvePlan(admin, context.env.DB, session.shop),
     listOffers(context.env.DB, session.shop),
   ]);

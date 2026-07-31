@@ -102,22 +102,65 @@ export async function resolvePlan(
 }
 
 /**
- * Re-read the plan, ignoring the cache.
+ * Map the `plan_handle` Shopify appends on the way back from its pricing page.
  *
- * For the return from Shopify's pricing page, where the merchant has just
- * changed plan and would otherwise sit inside the TTL looking at their old
- * limits, concluding the upgrade failed.
+ * Separate from `planFromSubscriptionName` because a handle is not a display
+ * name: it is commonly prefixed, as in `cartbloom-growth`. Matched by
+ * containment, and `growth` and `pro` share no substring so the order of these
+ * checks cannot produce a wrong answer.
+ */
+export function planFromHandle(handle: string | null | undefined): PlanName | null {
+  if (!handle) return null;
+  const needle = handle.trim().toLowerCase();
+
+  if (needle.includes('growth')) return 'growth';
+  if (needle.includes('pro')) return 'pro';
+  if (needle.includes('free')) return 'free';
+  return null;
+}
+
+/** Attempts and spacing for the propagation retry below. */
+const REFRESH_ATTEMPTS = 4;
+const REFRESH_DELAY_MS = 500;
+
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Re-read the plan, ignoring the cache, and wait for Shopify to catch up.
+ *
+ * The cache bypass alone is not enough. `activeSubscriptions` lags the approval
+ * a merchant just completed, so a single immediate read returns the *old* plan,
+ * caches it for the full TTL, and shows someone who has just paid their
+ * previous limits. That is a read-after-write race, and it is precisely the
+ * defect an App Store reviewer cited on another app as requirement 1.2.3 —
+ * "upgrading to Pro leaves the account on the Free tier".
+ *
+ * So when the caller knows which plan to expect — the return from the pricing
+ * page carries `plan_handle` — this polls briefly until Shopify agrees. Bounded
+ * hard at roughly a second and a half: a slow page beats a wrong one, but not
+ * indefinitely. Waiting costs wall time, not CPU, so it does not eat the
+ * Workers budget.
  */
 export async function refreshPlan(
   admin: Admin,
   db: D1Database,
-  shop: string
+  shop: string,
+  expected?: PlanName | null
 ): Promise<PlanName> {
   try {
-    const plan = await fetchPlan(admin);
+    let plan = await fetchPlan(admin);
+
+    if (expected != null) {
+      for (let attempt = 1; attempt < REFRESH_ATTEMPTS && plan !== expected; attempt += 1) {
+        await sleep(REFRESH_DELAY_MS);
+        plan = await fetchPlan(admin);
+      }
+    }
+
     await cachePlan(db, shop, plan);
     return plan;
   } catch {
+    // Stale beats broken, and beats a blank page.
     const record = await getShop(db, shop);
     return (record?.plan as PlanName | null) ?? 'free';
   }
