@@ -12,7 +12,7 @@ import type { LoaderFunctionArgs } from 'react-router';
 import { useLoaderData } from 'react-router';
 
 import { listOffers } from '../db.server';
-import { planFromHandle, refreshPlan, resolvePlan } from '../lib/plan.server';
+import { planFromHandle, refreshPlan } from '../lib/plan.server';
 import { PLAN_CAPS, planCaps, type PlanName } from '../lib/offer-draft';
 
 const STORE_KIND_QUERY = `#graphql
@@ -50,16 +50,28 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   // plan_handle set. Inside the cache TTL they would otherwise be looking at
   // their old limits and conclude the upgrade failed, so that return bypasses
   // the cache.
+  // Only used to show the "you are now on X" banner; the read below is fresh
+  // either way, so a missing plan_handle no longer means a stale plan.
   const planHandle = new URL(request.url).searchParams.get('plan_handle');
   const returning = planHandle !== null;
 
+  /*
+   * Always read fresh here, never from cache.
+   *
+   * This is the one page whose entire job is to state the plan correctly, and
+   * the one place where being wrong is both most visible and most damaging — a
+   * merchant who has just paid, looking at the tier they left. The five-minute
+   * cache exists to keep the plan off hot paths like the dashboard and the
+   * wizard; a single extra read on a page opened rarely is a fair trade for it
+   * never lying.
+   *
+   * It also removes a dependency on configuration we do not control: the cache
+   * bypass used to require `plan_handle`, which only arrives if every plan's
+   * redirection URL is pointed back here in the listing. When it is not, the
+   * page silently served a stale plan.
+   */
   const [plan, offers] = await Promise.all([
-    returning
-      ? // The handle names the plan the merchant just took, so the refresh can
-        // wait for Shopify's own read to agree rather than trusting the first
-        // answer it gets.
-        refreshPlan(admin, context.env.DB, session.shop, planFromHandle(planHandle))
-      : resolvePlan(admin, context.env.DB, session.shop),
+    refreshPlan(admin, context.env.DB, session.shop, planFromHandle(planHandle)),
     listOffers(context.env.DB, session.shop),
   ]);
 
