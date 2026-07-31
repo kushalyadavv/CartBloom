@@ -15,34 +15,6 @@ import { listOffers } from '../db.server';
 import { planFromHandle, refreshPlan } from '../lib/plan.server';
 import { PLAN_CAPS, planCaps, type PlanName } from '../lib/offer-draft';
 
-const STORE_KIND_QUERY = `#graphql
-  query CartBloomStoreKind {
-    shop { plan { partnerDevelopment } }
-  }`;
-
-/**
- * Whether this is a development store.
- *
- * Only used to explain a documented 404 that affects draft apps on dev stores.
- * Failure is not worth surfacing — a missing banner is a smaller problem than
- * an error page — so any problem here reads as "not a dev store".
- */
-async function isDevelopmentStore(
-  admin: Awaited<ReturnType<AdminAuthenticate>>['admin']
-): Promise<boolean> {
-  try {
-    const response = await admin.graphql(STORE_KIND_QUERY);
-    const body = (await response.json()) as {
-      data?: { shop?: { plan?: { partnerDevelopment?: boolean } } };
-    };
-    return body.data?.shop?.plan?.partnerDevelopment === true;
-  } catch {
-    return false;
-  }
-}
-
-type AdminAuthenticate = (request: Request) => Promise<{ admin: { graphql: (q: string) => Promise<Response> } }>;
-
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const { session, admin } = await context.shopify.authenticate.admin(request);
 
@@ -96,13 +68,6 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
      */
     handle: session.shop.replace('.myshopify.com', ''),
     /*
-     * Development stores hit a documented 404 on the plan page while the app is
-     * still a draft. Detected from the plan itself: a store on a paid plan is
-     * not a dev store, and this only gates a piece of explanatory copy, so a
-     * wrong guess costs a banner rather than a behaviour.
-     */
-    isDevStore: await isDevelopmentStore(admin),
-    /*
      * No default. An app handle that is merely plausible is worse than none:
      * `cartbloom` belongs to a different published app, so guessing it sent
      * merchants to a stranger's pricing page and a 404. When it is unset the
@@ -147,7 +112,7 @@ const LABELS: Record<PlanName, string> = {
 };
 
 export default function Plan() {
-  const { plan, caps, liveOffers, handle, appHandle, justChanged, overCap, isDevStore } =
+  const { plan, caps, liveOffers, handle, appHandle, justChanged, overCap } =
     useLoaderData<typeof loader>();
 
   // Shopify's own plan page. Building our own would mean handling charges,
@@ -177,23 +142,6 @@ export default function Plan() {
           <s-banner tone="critical" heading="Plan changes are unavailable">
             CartBloom is missing its app handle, so it cannot link to your plan page. This is a
             configuration problem on our side, not something you can fix — please contact support.
-          </s-banner>
-        </s-section>
-      )}
-
-      {/*
-        A documented Shopify limitation, surfaced rather than left to look like
-        our bug: a draft app's plan page 404s on a development store when the
-        store and the listing are set to different locales. It does not affect
-        published apps or production stores, so this only ever shows on a dev
-        store and disappears the moment the app is approved.
-      */}
-      {isDevStore && (
-        <s-section>
-          <s-banner tone="info" heading="Testing on a development store">
-            While CartBloom is still in review, this page can return a 404 on a development store
-            if the store and the app listing use different locales. It is a known Shopify
-            limitation and does not affect merchants on published apps.
           </s-banner>
         </s-section>
       )}
@@ -228,7 +176,8 @@ export default function Plan() {
         </s-stack>
       </s-section>
 
-      <s-grid gridTemplateColumns="repeat(auto-fit, minmax(260px, 1fr))" gap="base">
+      <s-section>
+        <s-grid gridTemplateColumns="repeat(auto-fit, minmax(260px, 1fr))" gap="base">
         {ORDER.map((name) => {
           const current = name === plan;
           const planCaps = PLAN_CAPS[name];
@@ -243,11 +192,17 @@ export default function Plan() {
                 cards ended at different heights and the buttons did not line
                 up.
               */}
+              {/*
+                One surface for all three. The current and recommended plans are
+                distinguished by their border and badge; tinting the background
+                as well made the cards look like different kinds of thing rather
+                than the same thing in different states.
+              */}
               <s-box
                 padding="large"
                 borderWidth={current || recommended ? 'large' : 'base'}
                 borderRadius="large"
-                background={current ? 'subdued' : undefined}
+                background="base"
               >
                 <s-stack gap="large">
                   <s-stack gap="small">
@@ -302,7 +257,8 @@ export default function Plan() {
             </s-grid-item>
           );
         })}
-      </s-grid>
+        </s-grid>
+      </s-section>
 
       <s-section heading="If you downgrade">
         <s-paragraph>
