@@ -19,6 +19,15 @@ describe('planFromSubscriptionName', () => {
     expect(planFromSubscriptionName('Growth monthly')).toBe('growth');
   });
 
+  it('reads the app-prefixed name Shopify actually creates', () => {
+    // This is the real shape: App Pricing names a subscription after the app and
+    // the plan together. Matching on prefix missed every one of them and
+    // returned 'free' — a paying merchant seeing their old limits.
+    expect(planFromSubscriptionName('CartBloom Pro')).toBe('pro');
+    expect(planFromSubscriptionName('CartBloom Growth')).toBe('growth');
+    expect(planFromSubscriptionName('CartBloom Free')).toBe('free');
+  });
+
   it('falls back to free for a name it cannot place', () => {
     // The safe direction: the alternative is granting Pro limits to a
     // subscription we cannot identify.

@@ -13,10 +13,11 @@ import { useLoaderData, useRevalidator } from 'react-router';
 
 import { getShop, listPublishedVersions } from '../db.server';
 import { authenticatedFetch } from '../lib/authenticated-fetch';
+import { fetchPlanDetails } from '../lib/plan.server';
 import { API_VERSION } from '../shopify.server';
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-  const { session } = await context.shopify.authenticate.admin(request);
+  const { session, admin } = await context.shopify.authenticate.admin(request);
   const [shop, versions] = await Promise.all([
     getShop(context.env.DB, session.shop),
     listPublishedVersions(context.env.DB, session.shop),
@@ -34,11 +35,21 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     installedAt: shop?.webhooksRegisteredAt ?? null,
     hasDiscountNode: shop?.discountNodeId !== null && shop?.discountNodeId !== undefined,
     apiVersion: API_VERSION,
+    /*
+     * What Shopify actually says about billing, verbatim.
+     *
+     * Mapping a subscription name to a plan is a guess about Shopify's naming,
+     * and when the guess is wrong the symptom is a paying merchant looking at
+     * Free with no way to tell why. Showing the raw name makes that a two-second
+     * read instead of an investigation.
+     */
+    billing: await fetchPlanDetails(admin).catch(() => null),
   };
 };
 
 export default function Settings() {
-  const { shop, handle, hasDiscountNode, apiVersion, versions } = useLoaderData<typeof loader>();
+  const { shop, handle, hasDiscountNode, apiVersion, versions, billing } =
+    useLoaderData<typeof loader>();
   const revalidator = useRevalidator();
   const [restoring, setRestoring] = useState<string | null>(null);
   const [restoreError, setRestoreError] = useState<string | null>(null);
@@ -114,6 +125,13 @@ export default function Settings() {
             {hasDiscountNode
               ? 'Discount created — CartBloom can apply rewards at checkout.'
               : 'No discount yet. Publish an offer and CartBloom will create one.'}
+          </s-list-item>
+          <s-list-item>
+            {billing === null
+              ? 'Billing: could not be read from Shopify.'
+              : billing.subscriptionName === null
+                ? `Billing: no active subscription (${billing.count} found). Treated as Free.`
+                : `Billing: “${billing.subscriptionName}” (${billing.status}) — read as ${billing.plan}.`}
           </s-list-item>
         </s-unordered-list>
       </s-section>

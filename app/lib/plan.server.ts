@@ -46,16 +46,44 @@ export function planFromSubscriptionName(name: string | null | undefined): PlanN
   if (!name) return 'free';
   const needle = name.trim().toLowerCase();
 
-  for (const plan of Object.keys(PLAN_CAPS) as PlanName[]) {
-    if (needle === plan || needle.startsWith(plan)) return plan;
+  /*
+   * Containment, not prefix.
+   *
+   * Shopify names an App Pricing subscription after the app and the plan
+   * together — "CartBloom Pro", not "Pro". A prefix match therefore failed on
+   * every real subscription and silently returned 'free', which is exactly the
+   * defect an App Store reviewer cited on another app as requirement 1.2.3:
+   * "upgrading to Pro leaves the account on the Free tier".
+   *
+   * The three plan names share no substring with one another, so the order of
+   * these checks cannot produce a wrong answer.
+   */
+  for (const plan of ['growth', 'pro', 'free'] as PlanName[]) {
+    if (needle.includes(plan)) return plan;
   }
   return 'free';
 }
 
 type Admin = AdminApiContext;
 
-/** Ask Shopify directly. */
-export async function fetchPlan(admin: Admin): Promise<PlanName> {
+export interface PlanDetails {
+  plan: PlanName;
+  /** Exactly what Shopify called it, for support and for diagnosing mismatches. */
+  subscriptionName: string | null;
+  status: string | null;
+  /** How many subscriptions came back, active or not. */
+  count: number;
+}
+
+/**
+ * Ask Shopify directly, keeping what it said.
+ *
+ * The raw name matters: mapping it to a plan is a guess about Shopify's naming,
+ * and when that guess is wrong the symptom is a paying merchant seeing Free.
+ * Surfacing the name in Settings turns that from a mystery into a two-second
+ * read.
+ */
+export async function fetchPlanDetails(admin: Admin): Promise<PlanDetails> {
   const response = await admin.graphql(PLAN_QUERY);
   const body = (await response.json()) as {
     data?: {
@@ -66,12 +94,19 @@ export async function fetchPlan(admin: Admin): Promise<PlanName> {
   };
 
   const subscriptions = body.data?.currentAppInstallation?.activeSubscriptions ?? [];
-
-  // ACTIVE only. A FROZEN subscription is unpaid and a PENDING one has not been
-  // approved; treating either as paid would hand out limits nobody is paying
-  // for.
   const active = subscriptions.find((s) => s.status === 'ACTIVE');
-  return planFromSubscriptionName(active?.name);
+
+  return {
+    plan: planFromSubscriptionName(active?.name),
+    subscriptionName: active?.name ?? null,
+    status: active?.status ?? subscriptions[0]?.status ?? null,
+    count: subscriptions.length,
+  };
+}
+
+/** Ask Shopify directly. */
+export async function fetchPlan(admin: Admin): Promise<PlanName> {
+  return (await fetchPlanDetails(admin)).plan;
 }
 
 /**
